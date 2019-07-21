@@ -1,4 +1,5 @@
 import {BigNumber} from 'bignumber.js'
+import copy from 'copy-to-clipboard'
 import {API_CHAIN_ID} from './../config'
 
 /**
@@ -59,6 +60,12 @@ export function Division(nu, arg) {
   let newDiv = new BigNumber(nu);
   return newDiv.div(arg);
 }
+
+/**
+ * 复制 copy
+ * @param value
+ */
+export const copys = (value) => copy(value);
 
 /**
  * 数字除以精度系数
@@ -149,4 +156,24 @@ export function connect(name, parameter, type = 0) {
     window.open(name, '_blank');
   }
 
+}
+
+/**
+ * 根据不同时区显示时间
+ * @param time
+ * @returns {*}
+ */
+export function getLocalTime(time) {
+  if (typeof time !== 'number') return;
+  let d = new Date();
+  let offset = d.getTimezoneOffset() * 60000;
+  let localUtc = new Date().getTimezoneOffset() / 60;
+  let utcTime;
+  if (localUtc > 0) {
+    utcTime = time - offset;
+  } else {
+    utcTime = time + offset;
+  }
+  let localTime = utcTime + 3600000 * Math.abs(localUtc);
+  return new Date(localTime);
 }

@@ -3,6 +3,8 @@ import Router from 'vue-router'
 import Home from './views/Home'
 import NewAddress from './views/user/NewAddress'
 import ImportAddress from './views/user/ImportAddress'
+import BackupsAddress from './views/user/BackupsAddress'
+import SwitchHall from './views/tx/SwitchHall'
 
 Vue.use(Router);
 
@@ -22,7 +24,17 @@ export default new Router({
       path: '/ImportAddress',
       name: 'importAddress',
       component: ImportAddress
+    },
+    {
+      path: '/BackupsAddress',
+      name: 'backupsAddress',
+      component: BackupsAddress
     }
-
+    ,
+    {
+      path: '/SwitchHall',
+      name: 'switchHall',
+      component: SwitchHall
+    }
   ]
 })
