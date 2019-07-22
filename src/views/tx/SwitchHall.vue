@@ -16,60 +16,75 @@
     <div class="top w1200">
       <div class="top-left fl">
         <h3 class="tabs_title tabs_header capitalize">{{$t('tradeAction.tradeAction0')}}</h3>
-        <div class="pie fl">
-          <el-form>
-            <el-form-item prop="price">
-              <el-input type="input" v-model="input" aria-placeholder="请设置单价"></el-input>USDT
-            </el-form-item>
-            <el-form-item prop="txNum">
-              <el-input type="input" v-model="input" aria-placeholder="购买数量"></el-input><span>NULS</span>
-            </el-form-item>
-            <el-form-item prop="userName">
-              <el-button type="danger" >买入</el-button>
-            </el-form-item>
-          </el-form>
+        <div class="order">
+          <el-row class="order_row">
+            <div class="order_label"><span>价格：</span></div>
+            <div class="order_input">
+              <el-input type="input" v-model="input" placeholder="请设置单价"></el-input>
+            </div>
+            <div class="order_span"><span>USDT</span></div>
+          </el-row>
+          <el-row class="order_row">
+            <div class="order_label"><span>数量：</span></div>
+            <div class="order_input">
+              <el-input type="input" v-model="txNum" placeholder="请输入购买数量"></el-input>
+            </div>
+            <div class="order_span"><span>NULS</span></div>
+          </el-row>
+          <el-row class="order_row">
+            <div class="order_label"><span>可用：</span></div>
+            <div class="order_label"><span>1000</span></div>
+            <div class="order_label"><span>USDT</span></div>
+          </el-row>
+          <el-row class="order_btn_row">
+            <el-button type="primary" >买入</el-button>
+          </el-row>
         </div>
       </div>
       <div class="top-left fl">
         <h3 class="tabs_title tabs_header capitalize">{{$t('tradeAction.tradeAction1')}}</h3>
-        <div class="pie fl">
-
-          <div class="a_total">
-
-          </div>
+        <div class="order">
+          <el-row class="order_row">
+            <div class="order_label"><span>价格：</span></div>
+            <div class="order_input">
+              <el-input type="input" v-model="input" placeholder="请设置单价"></el-input>
+            </div>
+            <div class="order_span"><span>USDT</span></div>
+          </el-row>
+          <el-row class="order_row">
+            <div class="order_label"><span>数量：</span></div>
+            <div class="order_input">
+              <el-input type="input" v-model="txNum" placeholder="请输入购买数量"></el-input>
+            </div>
+            <div class="order_span"><span>NULS</span></div>
+          </el-row>
+          <el-row class="order_row">
+            <div class="order_label"><span>可用：</span></div>
+            <div class="order_label"><span>1000</span></div>
+            <div class="order_label"><span>NULS</span></div>
+          </el-row>
+          <el-row class="order_btn_row">
+            <el-button type="primary" >买入</el-button>
+          </el-row>
         </div>
       </div>
-      <div class="top-right fl">
-        <h3 class="tabs_title tabs_header capitalize">{{$t('public.basicInfo')}}</h3>
-        <ul class="total_ul">
-          <li class="tabs_infos capitalize" v-if="isMobile">{{$t('public.balance')}}
-            <span class="fr">{{addressInfo.totalBalance}}</span>
-          </li>
-          <li class="tabs_infos capitalize" v-if="isMobile">{{$t('public.usablebalance')}}
-            <span class="fr">{{addressInfo.balances}}</span>
-          </li>
-          <li class="tabs_infos capitalize" v-if="isMobile">{{$t('public.consensusLocking')}}
-            <span class="fr">{{addressInfo.totalLocks}}</span>
-          </li>
-
-          <li class="tabs_infos capitalize">{{$t('public.alias')}}
-            <span class="fr">{{addressInfo.alias  ? addressInfo.alias : '-' }}</span>
-          </li>
-          <li class="tabs_infos capitalize">{{$t('public.transactionNo')}}<span
-                  class="fr">{{addressInfo.txCount}}</span></li>
-          <li class="tabs_infos capitalize">{{$t('public.address')+$t('public.type')}}<span class="fr">{{$t('addressType.'+addressInfo.type)}}</span>
-          </li>
-          <li class="tabs_infos capitalize">{{$t('addressList.addressList1')}}<span class="fr">{{addressInfo.totalIn}} NULS</span>
-          </li>
-          <li class="tabs_infos capitalize">{{$t('addressList.addressList2')}}<span class="fr">{{addressInfo.totalOut}} NULS</span>
-          </li>
-        </ul>
+      <div class="top-right">
+<!--        <el-tabs >-->
+<!--          <el-tab-pane label="我要买" name="buyTab">我要买</el-tab-pane>-->
+<!--          <el-tab-pane label="我要卖" name="sellTab">我要卖</el-tab-pane>-->
+<!--        </el-tabs>-->
+<!--        <el-tabs v-model="activeName" @tab-click="handleClick">-->
+<!--          <el-tab-pane label="用户管理" name="first">用户管理</el-tab-pane>-->
+<!--          <el-tab-pane label="配置管理" name="second">配置管理</el-tab-pane>-->
+<!--          <el-tab-pane label="角色管理" name="third">角色管理</el-tab-pane>-->
+<!--          <el-tab-pane label="定时任务补偿" name="fourth">定时任务补偿</el-tab-pane>-->
+<!--        </el-tabs>-->
       </div>
     </div>
     <div class="cb"></div>
     <div class="bottoms w1200 cb">
-      <el-tabs v-model="activeName" @tab-click="handleClick">
-      </el-tabs>
+<!--      <el-tabs v-model="activeName" @tab-click="handleClick">-->
+<!--      </el-tabs>-->
     </div>
   </div>
 </template>
@@ -435,6 +450,7 @@
         height: auto;
       }
       .top-left {
+        margin-left: 5px;
         width: 300px;
         height: 255px;
         border: @BD1;
@@ -445,14 +461,32 @@
           height: auto;
         }
         .tabs_title {
-          padding: 0 0 0 0px;
+          padding: 5px 0 0 0px;
           text-align: center;
+          height: 30px;
         }
         .tabs_header{
           background: #F5F6F8;
           font-size: 16px;
           font-weight: 700;
           color: #475472;
+        }
+      }
+      .order{
+        .order_row{
+          padding-top: 15px;
+          .order_label{
+            width: 60px;float:left; display:inline;padding: 10px 0 0 5px;
+          }
+          .order_input{
+            width: 160px;float:left; display:inline;
+          }
+          .order_span{
+            width: 60px;float:left; display:inline;padding: 10px 0 0 5px;
+          }
+        }
+        .order_btn_row{
+          padding-top: 20px; text-align: center
         }
       }
       .top-right {
