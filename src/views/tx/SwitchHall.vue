@@ -332,8 +332,8 @@
                         if (response.hasOwnProperty("result")) {
                             for (let item of response.result.records) {
                                 //item.createTime = moment(getLocalTime(item.createTime)).format('YYYY-MM-DD HH:mm:ss');
-                                item.price = timesDecimals(item.price, 8);
-                                item.totalNum = timesDecimals(item.totalNum, 8);
+                                //item.price = timesDecimals(item.price, 8);
+                                //item.totalNum = timesDecimals(item.totalNum, 8);
                             }
                             this.buyList = response.result.records;
                             this.buyListPager.total = response.result.records.total;
