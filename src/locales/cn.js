@@ -311,8 +311,14 @@ const cn ={
     "about":"问题反馈"
   },
   "tradeAction":{
-    "tradeAction0":"我要买",
-    "tradeAction1":"我要卖"
+    "myWantBuy":"我要买",
+    "myWantSell":"我要卖",
+    "buy":"买入",
+    "sell":"卖出"
+  },
+  "orderInfo":{
+    "price":"价格",
+    "num":"数量"
   },
   ...zhLocale
 };
