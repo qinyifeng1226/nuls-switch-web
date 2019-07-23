@@ -1,4 +1,6 @@
+import {post_nuls} from './https'
 import {post} from './https'
+import {get} from './https'
 import {Plus, chainID} from './util'
 
 /**
@@ -112,7 +114,7 @@ export async function inputsOrOutputs(transferInfo, balanceInfo, type) {
  * @returns {Promise<any>}
  */
 export async function getAddressInfoByAddress(address) {
-  return await post('/', 'getAccount', [address])
+  return await post_nuls('/', 'getAccount', [address])
     .then((response) => {
       //console.log(response);
       if (response.hasOwnProperty("result")) {
@@ -134,7 +136,7 @@ export async function getAddressInfoByAddress(address) {
  * @returns {Promise<any>}
  */
 export async function getBalanceOrNonceByAddress(address, assetId = 1) {
-  return await post('/', 'getAccountBalance', [assetId, address])
+  return await post_nuls('/', 'getAccountBalance', [assetId, address])
     .then((response) => {
       console.log(response);
       if (response.hasOwnProperty("result")) {
@@ -154,7 +156,7 @@ export async function getBalanceOrNonceByAddress(address, assetId = 1) {
  * @returns {Promise<any>}
  **/
 export async function validateTx(txHex) {
-  return await post('/', 'validateTx', [txHex])
+  return await post_nuls('/', 'validateTx', [txHex])
     .then((response) => {
       if (response.hasOwnProperty("result")) {
         return {success: true, data: response.result};
@@ -173,7 +175,7 @@ export async function validateTx(txHex) {
  * @returns {Promise<any>}
  **/
 export async function broadcastTx(txHex) {
-  return await post('/', 'broadcastTx', [txHex])
+  return await post_nuls('/', 'broadcastTx', [txHex])
     .then((response) => {
       if (response.hasOwnProperty("result")) {
         return {success: true, data: response.result};
@@ -192,7 +194,7 @@ export async function broadcastTx(txHex) {
  * @returns {Promise<any>}
  **/
 export async function validateAndBroadcast(txHex) {
-  return await post('/', 'validateTx', [txHex])
+  return await post_nuls('/', 'validateTx', [txHex])
     .then((response) => {
       //console.log(response);
       if (response.hasOwnProperty("result")) {
@@ -224,7 +226,7 @@ export async function validateAndBroadcast(txHex) {
  **/
 export async function agentDeposistList(agentHash) {
   //todo 这个接口是临时处理，后面要换一个接口，否则超过100个委托会出问题
-  return await post('/', 'getConsensusDeposit', [1, 100, agentHash])
+  return await post_nuls('/', 'getConsensusDeposit', [1, 100, agentHash])
     .then((response) => {
       return response.result;
     })
@@ -239,7 +241,7 @@ export async function agentDeposistList(agentHash) {
  * @returns {Promise<any>}
  */
 export async function getContractConstructor(contractCodeHex) {
-  return await post('/', 'getContractConstructor', [contractCodeHex])
+  return await post_nuls('/', 'getContractConstructor', [contractCodeHex])
     .then((response) => {
       //console.log(response);
       if (response.hasOwnProperty("result")) {
@@ -251,4 +253,21 @@ export async function getContractConstructor(contractCodeHex) {
     .catch((error) => {
       return {success: false, data: error};
     });
+}
+
+
+/**
+ * 获取卖出挂单列表
+ * @param agentHash
+ * @returns {Promise<any>}
+ **/
+export async function listOnSell(params) {
+  //todo 这个接口是临时处理，后面要换一个接口，否则超过100个委托会出问题
+  return await get('/', '/v1/order/listOnSell', params)
+      .then((response) => {
+        return response.result;
+      })
+      .catch((error) => {
+        return {success: false, data: error};
+      });
 }

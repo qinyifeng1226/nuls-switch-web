@@ -23,14 +23,14 @@
                         <el-row class="order_row">
                             <div class="order_label"><span>价格：</span></div>
                             <div class="order_input">
-                                <el-input type="input" v-model="input" placeholder="请设置单价"></el-input>
+                                <el-input type="input" v-model="buyTokenForm.price" placeholder="请设置单价"></el-input>
                             </div>
                             <div class="order_span"><span>USDT</span></div>
                         </el-row>
                         <el-row class="order_row">
                             <div class="order_label"><span>数量：</span></div>
                             <div class="order_input">
-                                <el-input type="input" v-model="txNum" placeholder="请输入购买数量"></el-input>
+                                <el-input type="input" v-model="buyTokenForm.txNum" placeholder="请输入购买数量"></el-input>
                             </div>
                             <div class="order_span"><span>NULS</span></div>
                         </el-row>
@@ -40,7 +40,7 @@
                             <div class="order_label"><span>USDT</span></div>
                         </el-row>
                         <el-row class="order_btn_row">
-                            <el-button type="primary">买入</el-button>
+                            <el-button type="primary">{{$t('tradeAction.buy')}}</el-button>
                         </el-row>
                     </div>
                 </div>
@@ -50,14 +50,14 @@
                         <el-row class="order_row">
                             <div class="order_label"><span>价格：</span></div>
                             <div class="order_input">
-                                <el-input type="input" v-model="input" placeholder="请设置单价"></el-input>
+                                <el-input type="input" v-model="buyTokenForm.price" placeholder="请设置单价"></el-input>
                             </div>
                             <div class="order_span"><span>USDT</span></div>
                         </el-row>
                         <el-row class="order_row">
                             <div class="order_label"><span>数量：</span></div>
                             <div class="order_input">
-                                <el-input type="input" v-model="txNum" placeholder="请输入购买数量"></el-input>
+                                <el-input type="input" v-model="buyTokenForm.txNum" placeholder="请输入购买数量"></el-input>
                             </div>
                             <div class="order_span"><span>NULS</span></div>
                         </el-row>
@@ -67,7 +67,7 @@
                             <div class="order_label"><span>NULS</span></div>
                         </el-row>
                         <el-row class="order_btn_row">
-                            <el-button type="primary">买入</el-button>
+                            <el-button type="primary">{{$t('tradeAction.sell')}}</el-button>
                         </el-row>
                     </div>
                 </div>
@@ -81,10 +81,10 @@
                             <el-table-column label="" width="30">
                             </el-table-column>
                             <el-table-column :label="$t('orderInfo.price')" width="170" align="left">
-                                <template slot-scope="scope">{{ scope.row.values }}</template>
+                                <template slot-scope="scope">{{ scope.row.price }}</template>
                             </el-table-column>
                             <el-table-column :label="$t('orderInfo.num')" width="170" align="left">
-                                <template slot-scope="scope">{{ scope.row.balance }}</template>
+                                <template slot-scope="scope">{{ scope.row.totalNum }}</template>
                             </el-table-column>
                             <el-table-column :label="$t('tradeAction.buy')" width="120" align="left">
                                 <template slot-scope="scope">买入</template>
@@ -96,7 +96,7 @@
                                            :total="buyListPager.total"
                                            :current-page.sync="buyListPager.page"
                                            :pager-count=5
-                                           :page-size="buyListPager.rows" @current-change="pagesTxListList">
+                                           :page-size="buyListPager.rows" @current-change="pagesBuyListList">
                             </el-pagination>
                         </div>
                     </el-tab-pane>
@@ -106,10 +106,10 @@
                             <el-table-column label="" width="30">
                             </el-table-column>
                             <el-table-column :label="$t('orderInfo.price')" width="170" align="left">
-                                <template slot-scope="scope">{{ scope.row.values }}</template>
+                                <template slot-scope="scope">{{ scope.row.price }}</template>
                             </el-table-column>
                             <el-table-column :label="$t('orderInfo.num')" width="170" align="left">
-                                <template slot-scope="scope">{{ scope.row.balance }}</template>
+                                <template slot-scope="scope">{{ scope.row.totalNum }}</template>
                             </el-table-column>
                             <el-table-column :label="$t('tradeAction.sell')" width="120" align="left">
                                 <template slot-scope="scope">卖出</template>
@@ -121,7 +121,7 @@
                                            :total="sellListPager.total"
                                            :current-page.sync="sellListPager.page"
                                            :pager-count=5
-                                           :page-size="sellListPager.rows" @current-change="pagesTxListList">
+                                           :page-size="sellListPager.rows" @current-change="pagesSellListList">
                             </el-pagination>
                         </div>
                     </el-tab-pane>
@@ -140,16 +140,22 @@
     //import nuls from 'nuls-sdk-js'
     import moment from 'moment'
     import {getLocalTime, superLong, copys, timesDecimals, Plus} from '@/api/util.js'
+    import {listOnSell} from '@/api/requestData'
 
     export default {
         data() {
             return {
+                buyTokenForm: {
+                    price: '',
+                    txNum: '',
+                },
                 isMobile: true,
                 activeName: 'buyTab',
                 //交易类型
                 typeRegion: 0,
                 //地址
-                address: this.$route.query.address,
+                //address: this.$route.query.address,
+                address: 'my',
                 //地址详情
                 addressInfo: [],
                 addressNumber: [],
@@ -158,7 +164,7 @@
                 //可买挂单列表分页信息
                 buyListPager: {
                     total: 0,
-                    page: 1,
+                    page: 0,
                     rows: 5,
                 },
                 //可买挂单列表加载动画
@@ -226,7 +232,7 @@
         },
         created() {
             this.isMobile = /(iPhone|iOS|Android|Windows Phone)/i.test(navigator.userAgent);
-            this.getAddressInfo(this.address);
+            //this.getAddressInfo(this.address);
             this.pagesBuyListList();
         },
         mounted() {
@@ -250,7 +256,6 @@
             }
         },
         methods: {
-
             /**
              * 复制方法
              * @param sting
@@ -264,40 +269,40 @@
              * 获地址详细信息
              */
             getAddressInfo(address) {
-                this.$post('/', 'getAccount', [address])
-                    .then((response) => {
-                        //console.log(response);
-                        if (response.hasOwnProperty("result")) {
-                            response.result.totalBalance = timesDecimals(response.result.totalBalance, 8);
-                            response.result.balances = timesDecimals(response.result.balance, 8);
-                            response.result.totalLock = Plus(response.result.timeLock, response.result.consensusLock).toString();
-                            response.result.totalLocks = timesDecimals(response.result.totalLock, 8);
-                            response.result.timeLock = timesDecimals(response.result.timeLock, 8);
-                            response.result.consensusLock = timesDecimals(response.result.consensusLock, 8);
-                            response.result.totalIn = timesDecimals(response.result.totalIn, 8);
-                            response.result.totalOut = timesDecimals(response.result.totalOut, 8);
-
-                            if (parseInt(response.result.balance) > 0) {
-                                this.addressNumber.push({
-                                    location: this.$t('public.usablebalance'),
-                                    value: parseInt(timesDecimals(response.result.balance, 8))
-                                });
-                            }
-                            if (parseInt(response.result.totalLock) > 0) {
-                                this.addressNumber.push({
-                                    location: this.$t('public.consensusLocking'),
-                                    value: parseInt(timesDecimals(response.result.totalLock, 8))
-                                });
-                            }
-
-                            //循环代币
-                            for (let item in response.result.tokens) {
-                                this.tokenOptions[item] = response.result.tokens[item].split(',');
-                            }
-                            this.tokenOptions.unshift(["", this.$t('type.0')]);
-                            this.addressInfo = response.result;
-                        }
-                    })
+                // this.$post('/', 'getAccount', [address])
+                //     .then((response) => {
+                //         //console.log(response);
+                //         if (response.hasOwnProperty("result")) {
+                //             response.result.totalBalance = timesDecimals(response.result.totalBalance, 8);
+                //             response.result.balances = timesDecimals(response.result.balance, 8);
+                //             response.result.totalLock = Plus(response.result.timeLock, response.result.consensusLock).toString();
+                //             response.result.totalLocks = timesDecimals(response.result.totalLock, 8);
+                //             response.result.timeLock = timesDecimals(response.result.timeLock, 8);
+                //             response.result.consensusLock = timesDecimals(response.result.consensusLock, 8);
+                //             response.result.totalIn = timesDecimals(response.result.totalIn, 8);
+                //             response.result.totalOut = timesDecimals(response.result.totalOut, 8);
+                //
+                //             if (parseInt(response.result.balance) > 0) {
+                //                 this.addressNumber.push({
+                //                     location: this.$t('public.usablebalance'),
+                //                     value: parseInt(timesDecimals(response.result.balance, 8))
+                //                 });
+                //             }
+                //             if (parseInt(response.result.totalLock) > 0) {
+                //                 this.addressNumber.push({
+                //                     location: this.$t('public.consensusLocking'),
+                //                     value: parseInt(timesDecimals(response.result.totalLock, 8))
+                //                 });
+                //             }
+                //
+                //             //循环代币
+                //             for (let item in response.result.tokens) {
+                //                 this.tokenOptions[item] = response.result.tokens[item].split(',');
+                //             }
+                //             this.tokenOptions.unshift(["", this.$t('type.0')]);
+                //             this.addressInfo = response.result;
+                //         }
+                //     })
             },
 
             /**
@@ -320,23 +325,28 @@
              * 根据地址获取可买挂单列表
              */
             getBuyListByAddress(page, rows, address, type, boolean) {
-                this.$post('/v1/order/listOnSell', '', [page, rows, address, type, boolean])
+                let params = {"current": page, "pageSize": rows, "address": address};
+                this.$get('/v1/order/listOnSell', '', params)
                     .then((response) => {
                         //console.log(response);
                         if (response.hasOwnProperty("result")) {
-                            for (let item of response.result.list) {
-                                item.createTime = moment(getLocalTime(item.createTime)).format('YYYY-MM-DD HH:mm:ss');
-                                item.price = timesDecimals(item.values, 8);
-                                item.totalNum = timesDecimals(item.balance, 8);
+                            for (let item of response.result.records) {
+                                //item.createTime = moment(getLocalTime(item.createTime)).format('YYYY-MM-DD HH:mm:ss');
+                                item.price = timesDecimals(item.price, 8);
+                                item.totalNum = timesDecimals(item.totalNum, 8);
                             }
-                            this.buyList = response.result.list;
-                            this.buyListPager.total = response.result.records.size();
+                            this.buyList = response.result.records;
+                            this.buyListPager.total = response.result.records.total;
                             this.buyListLoading = false;
                         }
                     }).catch((error) => {
                     console.log(error)
                 })
             },
+
+            // this.listOnSell({"pageNumber":pageNumber,"pageSize":_self.pageSize,"address":_self.address},function(res){
+            //
+            // }),
 
             /**
              * 根据地址获取可买挂单列表 分页
@@ -349,7 +359,9 @@
              * 根据地址获取可卖挂单列表
              */
             getSellListByAddress(page, rows, address, contractAddress) {
-                this.$post('/', 'getTokenTransfers', [page, rows, address, contractAddress])
+                let params = {"current": page, "pageSize": rows, "address": address};
+                this.$get('/v1/order/listOnBuy', '', params)
+                //this.$get('/', 'getTokenTransfers', [page, rows, address, contractAddress])
                     .then((response) => {
                         //console.log(response);
                         if (response.hasOwnProperty("result")) {
@@ -363,8 +375,8 @@
                             //   item.txHashs = superLong(item.txHash, 10);
                             //   item.showValue = this.address === item.toAddress;
                             // }
-                            this.sellList = response.result.list;
-                            this.sellListPager.total = response.result.records.size();
+                            this.sellList = response.result.records;
+                            this.sellListPager.total = response.result.records.total;
                             this.sellListLoading = false;
                         }
                     }).catch((error) => {
@@ -449,11 +461,11 @@
         watch: {
             address: function () {
                 // address，当放生变化时，重新获取数据
-                this.activeName = 'addressFirst';
+                this.activeName = 'buyTab';
                 this.addressNumber = [];
                 this.buyListLoading = true;
-                this.getAddressInfo(this.address);
-                this.pagesTxListList();
+                //this.getAddressInfo(this.address);
+                this.pagesBuyListList();
 
                 //延迟加载饼状图
                 setTimeout(() => {
