@@ -39,10 +39,7 @@ export function post_nuls(url, methodName, data = []) {
  */
 export function post(url, methodName, params = {}) {
   return new Promise((resolve, reject) => {
-    //params.unshift(chainID());
-    //const params = {"jsonrpc": "2.0", "method": methodName, "params": data, "id": 5898};
-    /* console.log(url);
-     console.log(params);*/
+    url+=methodName;
     axios.post(url, params)
         .then(response => {
           resolve(response.data)
@@ -60,16 +57,12 @@ export function post(url, methodName, params = {}) {
  * @param data
  * @returns {Promise}
  */
-export function get(url, methodName, params = {}) {
+export function get(url, methodName, data = {}) {
     return new Promise((resolve, reject) => {
-        //data.unshift(chainID());
-        //const params = {"jsonrpc": "2.0", "method": methodName, "params": data, "id": 5898};
-        //const params = {"params": data};
+        const params = {"params": data};
         url+=methodName;
-        url+="?current=0&address=my";
-        /* */ console.log(url);
-         console.log(params);
-        axios.get(url, {})
+        console.log(params);
+        axios.get(url, params)
             .then(response => {
                 resolve(response.data)
                 console.log(response.data)

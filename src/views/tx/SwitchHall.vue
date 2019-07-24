@@ -18,7 +18,7 @@
         <div class="top w1200">
             <div class="order">
                 <div class="top-left fl">
-                    <h3 class="tabs_title tabs_header capitalize">{{$t('tradeAction.myWantBuy')}}</h3>
+                    <h3 class="tabs_title tabs_header capitalize">{{$t('switch.myWantBuy')}}</h3>
                     <div class="order_left">
                         <el-row class="order_row">
                             <div class="order_label"><span>价格：</span></div>
@@ -40,12 +40,12 @@
                             <div class="order_label"><span>USDT</span></div>
                         </el-row>
                         <el-row class="order_btn_row">
-                            <el-button type="primary">{{$t('tradeAction.buy')}}</el-button>
+                            <el-button type="primary">{{$t('switch.buy')}}</el-button>
                         </el-row>
                     </div>
                 </div>
                 <div class="top-left fl">
-                    <h3 class="tabs_title tabs_header capitalize">{{$t('tradeAction.myWantSell')}}</h3>
+                    <h3 class="tabs_title tabs_header capitalize">{{$t('switch.myWantSell')}}</h3>
                     <div class="order_left">
                         <el-row class="order_row">
                             <div class="order_label"><span>价格：</span></div>
@@ -67,7 +67,7 @@
                             <div class="order_label"><span>NULS</span></div>
                         </el-row>
                         <el-row class="order_btn_row">
-                            <el-button type="primary">{{$t('tradeAction.sell')}}</el-button>
+                            <el-button type="primary">{{$t('switch.sell')}}</el-button>
                         </el-row>
                     </div>
                 </div>
@@ -75,7 +75,7 @@
 
             <div class="top-right fr">
                 <el-tabs v-model="activeName" @tab-click="handleClick">
-                    <el-tab-pane :label="$t('tradeAction.myWantBuy')" name="buyTab">
+                    <el-tab-pane :label="$t('switch.myWantBuy')" name="buyTab">
                         <el-table :data="buyList" stripe border style="width: 100%;" class="mt_20"
                                   v-loading="buyListLoading">
                             <el-table-column label="" width="30">
@@ -86,7 +86,7 @@
                             <el-table-column :label="$t('orderInfo.num')" width="170" align="left">
                                 <template slot-scope="scope">{{ scope.row.totalNum }}</template>
                             </el-table-column>
-                            <el-table-column :label="$t('tradeAction.buy')" width="120" align="left">
+                            <el-table-column :label="$t('switch.buy')" width="120" align="left">
                                 <template slot-scope="scope">买入</template>
                             </el-table-column>
                         </el-table>
@@ -100,7 +100,7 @@
                             </el-pagination>
                         </div>
                     </el-tab-pane>
-                    <el-tab-pane :label="$t('tradeAction.myWantSell')" name="sellTab">
+                    <el-tab-pane :label="$t('switch.myWantSell')" name="sellTab">
                         <el-table :data="sellList" stripe border style="width: 100%;" class="mt_20"
                                   v-loading="sellListLoading">
                             <el-table-column label="" width="30">
@@ -111,7 +111,7 @@
                             <el-table-column :label="$t('orderInfo.num')" width="170" align="left">
                                 <template slot-scope="scope">{{ scope.row.totalNum }}</template>
                             </el-table-column>
-                            <el-table-column :label="$t('tradeAction.sell')" width="120" align="left">
+                            <el-table-column :label="$t('switch.sell')" width="120" align="left">
                                 <template slot-scope="scope">卖出</template>
                             </el-table-column>
                         </el-table>
@@ -130,8 +130,42 @@
         </div>
         <div class="cb"></div>
         <div class="bottoms w1200 cb">
-            <!--      <el-tabs v-model="activeName" @tab-click="handleClick">-->
-            <!--      </el-tabs>-->
+            <el-tabs v-model="depositActiveName">
+                <el-tab-pane :label="$t('switch.currentDeposit')" name="depositTab">
+                    <el-table :data="buyList" stripe border style="width: 100%;" class="mt_20"
+                              v-loading="buyListLoading">
+                        <el-table-column label="" width="30">
+                        </el-table-column>
+                        <el-table-column :label="$t('orderInfo.createTime')" width="170" align="left">
+                            <template slot-scope="scope">{{ scope.row.createTime }}</template>
+                        </el-table-column>
+                        <el-table-column :label="$t('orderInfo.txPair')" width="170" align="left">
+                            <template slot-scope="scope">{{ scope.row.txPair }}</template>
+                        </el-table-column>
+                        <el-table-column :label="$t('orderInfo.price')" width="170" align="left">
+                            <template slot-scope="scope">{{ scope.row.price }}</template>
+                        </el-table-column>
+                        <el-table-column :label="$t('orderInfo.num')" width="170" align="left">
+                            <template slot-scope="scope">{{ scope.row.txNum }}/{{ scope.row.totalNum }}</template>
+                        </el-table-column>
+                        <el-table-column :label="$t('orderInfo.totalAmount')" width="170" align="left">
+                            <template slot-scope="scope">{{ scope.row.totalAmount }}</template>
+                        </el-table-column>
+                        <el-table-column :label="$t('orderInfo.status')" width="170" align="left">
+                            <template slot-scope="scope">{{ scope.row.status }}</template>
+                        </el-table-column>
+                    </el-table>
+                    <div class="paging">
+                        <el-pagination class="pages" background layout="total,prev, pager, next, jumper"
+                                       v-show="depositListPager.total > depositListPager.rows"
+                                       :total="depositListPager.total"
+                                       :current-page.sync="depositListPager.page"
+                                       :pager-count=5
+                                       :page-size="depositListPager.rows" @current-change="pagesDepositListList">
+                        </el-pagination>
+                    </div>
+                </el-tab-pane>
+            </el-tabs>
         </div>
     </div>
 </template>
@@ -151,6 +185,7 @@
                 },
                 isMobile: true,
                 activeName: 'buyTab',
+                depositActiveName: 'depositTab',
                 //交易类型
                 typeRegion: 0,
                 //地址
@@ -164,8 +199,8 @@
                 //可买挂单列表分页信息
                 buyListPager: {
                     total: 0,
-                    page: 0,
-                    rows: 5,
+                    page: 1,
+                    rows: 2,
                 },
                 //可买挂单列表加载动画
                 buyListLoading: true,
@@ -175,10 +210,20 @@
                 sellListPager: {
                     total: 0,
                     page: 1,
-                    rows: 4,
+                    rows: 2,
                 },
                 //可卖挂单列表加载动画
                 sellListLoading: true,
+                //当前委托列表
+                depositList: [],
+                //当前委托列表分页信息
+                depositListPager: {
+                    total: 0,
+                    page: 1,
+                    rows: 2,
+                },
+                //当前委托列表加载动画
+                depositListLoading: true,
                 //隐藏共识奖励
                 hideSwitch: false,
                 fromTokenId: '',
@@ -222,7 +267,7 @@
                 toTokenOptions: [],
                 tokenOptions: [],
                 //token类型
-                tokenValue: '',
+                //tokenValue: '',
                 //地址定时器
                 addressInterval: null,
             }
@@ -234,6 +279,7 @@
             this.isMobile = /(iPhone|iOS|Android|Windows Phone)/i.test(navigator.userAgent);
             //this.getAddressInfo(this.address);
             this.pagesBuyListList();
+            this.pagesDepositListList();
         },
         mounted() {
             //延迟加载饼状图
@@ -324,19 +370,19 @@
             /**
              * 根据地址获取可买挂单列表
              */
-            getBuyListByAddress(page, rows, address, type, boolean) {
-                let params = {"current": page, "pageSize": rows, "address": address};
+            getBuyListByAddress(page, rows, address) {
+                let params = {"current": page, "pageSize": rows, "address": address, "fromTokenId": this.fromTokenId, "toTokenId": this.toTokenId};
                 this.$get('/v1/order/listOnSell', '', params)
                     .then((response) => {
                         //console.log(response);
                         if (response.hasOwnProperty("result")) {
-                            for (let item of response.result.records) {
-                                //item.createTime = moment(getLocalTime(item.createTime)).format('YYYY-MM-DD HH:mm:ss');
-                                //item.price = timesDecimals(item.price, 8);
-                                //item.totalNum = timesDecimals(item.totalNum, 8);
-                            }
+                            // for (let item of response.result.records) {
+                            //     item.createTime = moment(getLocalTime(item.createTime)).format('YYYY-MM-DD HH:mm:ss');
+                            //     item.price = timesDecimals(item.price, 8);
+                            //     item.totalNum = timesDecimals(item.totalNum, 8);
+                            // }
                             this.buyList = response.result.records;
-                            this.buyListPager.total = response.result.records.total;
+                            this.buyListPager.total = response.result.total;
                             this.buyListLoading = false;
                         }
                     }).catch((error) => {
@@ -352,14 +398,14 @@
              * 根据地址获取可买挂单列表 分页
              */
             pagesBuyListList() {
-                this.getBuyListByAddress(this.buyListPager.page, this.buyListPager.rows, this.address, this.typeRegion, this.hideSwitch);
+                this.getBuyListByAddress(this.buyListPager.page, this.buyListPager.rows, this.address);
             },
 
             /**
              * 根据地址获取可卖挂单列表
              */
-            getSellListByAddress(page, rows, address, contractAddress) {
-                let params = {"current": page, "pageSize": rows, "address": address};
+            getSellListByAddress(page, rows, address) {
+                let params = {"current": page, "pageSize": rows, "address": address, "fromTokenId": this.fromTokenId, "toTokenId": this.toTokenId};
                 this.$get('/v1/order/listOnBuy', '', params)
                 //this.$get('/', 'getTokenTransfers', [page, rows, address, contractAddress])
                     .then((response) => {
@@ -376,7 +422,7 @@
                             //   item.showValue = this.address === item.toAddress;
                             // }
                             this.sellList = response.result.records;
-                            this.sellListPager.total = response.result.records.total;
+                            this.sellListPager.total = response.result.total;
                             this.sellListLoading = false;
                         }
                     }).catch((error) => {
@@ -388,7 +434,37 @@
              * 根据地址获取Token交易列表分页
              */
             pagesSellListList() {
-                this.getSellListByAddress(this.sellListPager.page, this.sellListPager.rows, this.address, this.tokenValue);
+                this.getSellListByAddress(this.sellListPager.page, this.sellListPager.rows, this.address);
+            },
+
+            /**
+             * 根据地址获取当前委托列表
+             */
+            getDepositListByAddress(page, rows, address) {
+                let params = {"current": page, "pageSize": rows, "address": address};
+                this.$get('/v1/order/queryMyCurrentOrder', '', params)
+                    .then((response) => {
+                        if (response.hasOwnProperty("result")) {
+                            // for (let item of response.result.records) {
+                            //     item.createTime = moment(getLocalTime(item.createTime)).format('YYYY-MM-DD HH:mm:ss');
+                            //     item.price = timesDecimals(item.price, 8);
+                            //     item.totalNum = timesDecimals(item.totalNum, 8);
+                            // }
+                            this.depositList = response.result.records;
+                            this.depositListPager.total = response.result.total;
+                            this.depositListLoading = false;
+                            console.log("dep: "+response.result.total);
+                        }
+                    }).catch((error) => {
+                    console.log(error)
+                })
+            },
+
+            /**
+             * 根据地址获取当前委托列表 分页
+             */
+            pagesDepositListList() {
+                this.getDepositListByAddress(this.buyListPager.page, this.buyListPager.rows, this.address);
             },
 
             /**
@@ -463,10 +539,10 @@
                 // address，当放生变化时，重新获取数据
                 this.activeName = 'buyTab';
                 this.addressNumber = [];
-                this.buyListLoading = true;
+                //this.buyListLoading = true;
                 //this.getAddressInfo(this.address);
-                this.pagesBuyListList();
-
+                //this.pagesBuyListList();
+                //this.pagesDepositListList();
                 //延迟加载饼状图
                 setTimeout(() => {
 

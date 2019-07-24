@@ -310,15 +310,21 @@ const cn ={
     "community":"社区",
     "about":"问题反馈"
   },
-  "tradeAction":{
+  "switch":{
     "myWantBuy":"我要买",
     "myWantSell":"我要卖",
     "buy":"买入",
-    "sell":"卖出"
+    "sell":"卖出",
+    "currentDeposit":"当前委托",
+    "hisDeposit":"历史委托"
   },
   "orderInfo":{
     "price":"价格",
-    "num":"数量"
+    "num":"数量",
+    "createTime":"时间",
+    "txPair":"交易对",
+    "totalAmount":"总额",
+    "status":"状态"
   },
   ...zhLocale
 };
