@@ -15,18 +15,19 @@ axios.defaults.headers.post['Content-Type'] = 'application/json';
  * @returns {Promise}
  */
 export function post_nuls(url, methodName, data = []) {
-  return new Promise((resolve, reject) => {
-    data.unshift(chainID());
-    const params = {"jsonrpc": "2.0", "method": methodName, "params": data, "id": 5898};
-    /* console.log(url);
-     console.log(params);*/
-    axios.post(url, params)
-      .then(response => {
-        resolve(response.data)
-      }, err => {
-        reject(err)
-      })
-  })
+    return new Promise((resolve, reject) => {
+        data.unshift(chainID());
+        const params = {"jsonrpc": "2.0", "method": methodName, "params": data, "id": 5898};
+        /* console.log(url);
+         console.log(params);*/
+        url = config.NULS_API_URL;
+        axios.post(url, params)
+            .then(response => {
+                resolve(response.data)
+            }, err => {
+                reject(err)
+            })
+    })
 }
 
 /**
@@ -38,15 +39,15 @@ export function post_nuls(url, methodName, data = []) {
  * @returns {Promise}
  */
 export function post(url, methodName, params = {}) {
-  return new Promise((resolve, reject) => {
-    url+=methodName;
-    axios.post(url, params)
-        .then(response => {
-          resolve(response.data)
-        }, err => {
-          reject(err)
-        })
-  })
+    return new Promise((resolve, reject) => {
+        url += methodName;
+        axios.post(url, params)
+            .then(response => {
+                resolve(response.data)
+            }, err => {
+                reject(err)
+            })
+    })
 }
 
 /**
@@ -60,7 +61,7 @@ export function post(url, methodName, params = {}) {
 export function get(url, methodName, data = {}) {
     return new Promise((resolve, reject) => {
         const params = {"params": data};
-        url+=methodName;
+        url += methodName;
         console.log(params);
         axios.get(url, params)
             .then(response => {

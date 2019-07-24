@@ -199,7 +199,7 @@ export async function validateAndBroadcast(txHex) {
       //console.log(response);
       if (response.hasOwnProperty("result")) {
         let newHash = response.result.value;
-        return post('/', 'broadcastTx', [txHex])
+        return post_nuls('/', 'broadcastTx', [txHex])
           .then((response) => {
             if (response.hasOwnProperty("result")) {
               return {success: true, hash: newHash};
