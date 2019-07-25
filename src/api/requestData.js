@@ -271,3 +271,20 @@ export async function listOnSell(params) {
         return {success: false, data: error};
       });
 }
+
+/**
+ * 获取访问Token
+ * @param params
+ * @returns {Promise<any>}
+ **/
+export async function getToken(params) {
+  return await post('/v1/auth', '/getToken', params)
+      .then((response) => {
+        return response.result;
+      })
+      .catch((error) => {
+        return {success: false, data: error};
+      });
+}
+
+
