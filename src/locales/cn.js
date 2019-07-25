@@ -321,6 +321,7 @@ const cn ={
   "orderInfo":{
     "price":"价格",
     "num":"数量",
+    "usable":"可用",
     "createTime":"时间",
     "txPair":"交易对",
     "totalAmount":"总额",

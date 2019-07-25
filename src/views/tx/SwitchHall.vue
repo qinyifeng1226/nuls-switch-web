@@ -21,21 +21,21 @@
                     <h3 class="tabs_title tabs_header capitalize">{{$t('switch.myWantBuy')}}</h3>
                     <div class="order_left">
                         <el-row class="order_row">
-                            <div class="order_label"><span>价格：</span></div>
+                            <div class="order_label"><span>{{$t('orderInfo.price')}}：</span></div>
                             <div class="order_input">
-                                <el-input type="input" v-model="buyTokenForm.price" placeholder="请设置单价"></el-input>
+                                <el-input type="input" v-model="buyTokenOrderForm.price" placeholder="请设置单价"></el-input>
                             </div>
                             <div class="order_span"><span>USDT</span></div>
                         </el-row>
                         <el-row class="order_row">
-                            <div class="order_label"><span>数量：</span></div>
+                            <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
                             <div class="order_input">
-                                <el-input type="input" v-model="buyTokenForm.txNum" placeholder="请输入购买数量"></el-input>
+                                <el-input type="input" v-model="buyTokenOrderForm.txNum" placeholder="请输入购买数量"></el-input>
                             </div>
                             <div class="order_span"><span>NULS</span></div>
                         </el-row>
                         <el-row class="order_row">
-                            <div class="order_label"><span>可用：</span></div>
+                            <div class="order_label"><span>{{$t('orderInfo.usable')}}：</span></div>
                             <div class="order_label"><span>1000</span></div>
                             <div class="order_label"><span>USDT</span></div>
                         </el-row>
@@ -48,21 +48,21 @@
                     <h3 class="tabs_title tabs_header capitalize">{{$t('switch.myWantSell')}}</h3>
                     <div class="order_left">
                         <el-row class="order_row">
-                            <div class="order_label"><span>价格：</span></div>
+                            <div class="order_label"><span>{{$t('orderInfo.price')}}：</span></div>
                             <div class="order_input">
-                                <el-input type="input" v-model="buyTokenForm.price" placeholder="请设置单价"></el-input>
+                                <el-input type="input" v-model="buyTokenOrderForm.price" placeholder="请设置单价"></el-input>
                             </div>
                             <div class="order_span"><span>USDT</span></div>
                         </el-row>
                         <el-row class="order_row">
-                            <div class="order_label"><span>数量：</span></div>
+                            <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
                             <div class="order_input">
-                                <el-input type="input" v-model="buyTokenForm.txNum" placeholder="请输入购买数量"></el-input>
+                                <el-input type="input" v-model="buyTokenOrderForm.txNum" placeholder="请输入购买数量"></el-input>
                             </div>
                             <div class="order_span"><span>NULS</span></div>
                         </el-row>
                         <el-row class="order_row">
-                            <div class="order_label"><span>可用：</span></div>
+                            <div class="order_label"><span>{{$t('orderInfo.usable')}}：</span></div>
                             <div class="order_label"><span>1000</span></div>
                             <div class="order_label"><span>NULS</span></div>
                         </el-row>
@@ -76,7 +76,7 @@
             <div class="top-right fr">
                 <el-tabs v-model="activeName" @tab-click="handleClick">
                     <el-tab-pane :label="$t('switch.myWantBuy')" name="buyTab">
-                        <el-table :data="buyList" stripe border style="width: 100%;" class="mt_20"
+                        <el-table :data="buyList" stripe border style="width: 100%;" class="mt_0"
                                   v-loading="buyListLoading">
                             <el-table-column label="" width="30">
                             </el-table-column>
@@ -87,7 +87,7 @@
                                 <template slot-scope="scope">{{ scope.row.totalNum }}</template>
                             </el-table-column>
                             <el-table-column :label="$t('switch.buy')" width="120" align="left">
-                                <template slot-scope="scope">买入</template>
+                                <template><el-button type="primary" @click="buyBtnClick">{{$t('switch.buy')}}</el-button></template>
                             </el-table-column>
                         </el-table>
                         <div class="paging">
@@ -101,7 +101,7 @@
                         </div>
                     </el-tab-pane>
                     <el-tab-pane :label="$t('switch.myWantSell')" name="sellTab">
-                        <el-table :data="sellList" stripe border style="width: 100%;" class="mt_20"
+                        <el-table :data="sellList" stripe border style="width: 100%;" class="mt_0"
                                   v-loading="sellListLoading">
                             <el-table-column label="" width="30">
                             </el-table-column>
@@ -112,7 +112,7 @@
                                 <template slot-scope="scope">{{ scope.row.totalNum }}</template>
                             </el-table-column>
                             <el-table-column :label="$t('switch.sell')" width="120" align="left">
-                                <template slot-scope="scope">卖出</template>
+                                <template><el-button type="primary" @click="sellBtnClick">{{$t('switch.sell')}}</el-button></template>
                             </el-table-column>
                         </el-table>
                         <div class="paging">
@@ -132,7 +132,7 @@
         <div class="bottoms w1200 cb">
             <el-tabs v-model="depositActiveName">
                 <el-tab-pane :label="$t('switch.currentDeposit')" name="depositTab">
-                    <el-table :data="buyList" stripe border style="width: 100%;" class="mt_20"
+                    <el-table :data="buyList" stripe border style="width: 100%;" class="mt_0"
                               v-loading="buyListLoading">
                         <el-table-column label="" width="30">
                         </el-table-column>
@@ -167,6 +167,35 @@
                 </el-tab-pane>
             </el-tabs>
         </div>
+        <el-dialog title="买入" :visible.sync="buyTokenVisible" top="30vh" width="20rem"
+                   class="password-dialog"
+                   :close-on-click-modal="false"
+                   :close-on-press-escape="false"
+                   @open="buyTokenFormShow"
+                   @close="buyTokenFormClose">
+<!--            :rules="buyTokendRules" @submit.native.prevent-->
+            <el-form ref="buyTokenForm" :model="buyTokenForm" >
+                <el-form-item prop="txNum">
+                </el-form-item>
+<!--                    <el-input v-model="buyTokenForm.txNum" type="input" :maxlength="22" ref="inpus"-->
+<!--                              @keyup.enter.native="enterSubmit('passwordForm')">-->
+<!--                    </el-input>-->
+                <div class="buyToken">
+                <el-row class="order_row">
+                    <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
+                    <div class="order_input">
+                        <el-input type="input" v-model="buyTokenForm.txNum" :maxlength="10"
+                                  placeholder="请输入数量"></el-input>
+                    </div>
+                </el-row>
+                </div>
+            </el-form>
+            <div slot="footer" class="dialog-footer1">
+                <el-button @click="buyTokenFormClose">取 消</el-button>
+                <el-button type="primary" @click="dialogSubmit('buyTokenForm')" id="buyTokenFormInfo">确 定
+                </el-button>
+            </div>
+        </el-dialog>
     </div>
 </template>
 
@@ -179,10 +208,15 @@
     export default {
         data() {
             return {
-                buyTokenForm: {
+                buyTokenOrderForm: {
                     price: '',
                     txNum: '',
                 },
+                buyTokenForm: {
+                    txNum: '',
+                },
+                buyTokenVisible: false,
+                sellTokenVisible: false,
                 isMobile: true,
                 activeName: 'buyTab',
                 depositActiveName: 'depositTab',
@@ -291,9 +325,9 @@
             }, 500);
 
             //定时获取地址
-            this.addressInterval = setInterval(() => {
-                this.address = this.$route.query.address;
-            }, 500)
+            // this.addressInterval = setInterval(() => {
+            //     //this.address = this.$route.query.address;
+            // }, 500);
         },
         beforeDestroy() {
             //离开界面清除定时器
@@ -361,17 +395,60 @@
                     this.buyListLoading = true;
                     this.pagesBuyListList();
                 } else if (tab.name === 'sellTab') {
+                    console.log("this.address:  " + this.address);
                     // 查询可卖挂单列表
                     this.sellListLoading = true;
-                    this.pagesSellListList(this.sellListPager.page, this.sellListPager.rows, this.address, "")
+                    this.pagesSellListList();
                 }
+            },
+
+            /**
+             * 点击买入按钮，弹出购买框
+             */
+            buyBtnClick(){
+                this.buyTokenVisible=true;
+            },
+
+            /**
+             * 点击买出按钮，弹出卖出框
+             */
+            sellBtnClick(){
+                this.sellTokenVisible=true;
+            },
+
+            //密码框显示执行事件
+            buyTokenFormShow() {
+            },
+            buyTokenFormClose() {
+                this.$refs['buyTokenForm'].resetFields();
+                this.buyTokenVisible = false;
+            },
+            showPassword(boolean) {
+                this.buyTokenVisible = boolean;
+            },
+            //弹出密码输入框
+            dialogSubmit(formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        //this.$emit('passwordSubmit', this.passwordForm.password);
+                        this.buyTokenVisible = false;
+                    } else {
+                        return false
+                    }
+                })
             },
 
             /**
              * 根据地址获取可买挂单列表
              */
             getBuyListByAddress(page, rows, address) {
-                let params = {"current": page, "pageSize": rows, "address": address, "fromTokenId": this.fromTokenId, "toTokenId": this.toTokenId};
+                let params = {
+                    "current": page,
+                    "pageSize": rows,
+                    "address": address,
+                    "fromTokenId": this.fromTokenId,
+                    "toTokenId": this.toTokenId
+                };
                 this.$get('/v1/order/listOnSell', '', params)
                     .then((response) => {
                         //console.log(response);
@@ -405,7 +482,13 @@
              * 根据地址获取可卖挂单列表
              */
             getSellListByAddress(page, rows, address) {
-                let params = {"current": page, "pageSize": rows, "address": address, "fromTokenId": this.fromTokenId, "toTokenId": this.toTokenId};
+                let params = {
+                    "current": page,
+                    "pageSize": rows,
+                    "address": address,
+                    "fromTokenId": this.fromTokenId,
+                    "toTokenId": this.toTokenId
+                };
                 this.$get('/v1/order/listOnBuy', '', params)
                 //this.$get('/', 'getTokenTransfers', [page, rows, address, contractAddress])
                     .then((response) => {
@@ -453,7 +536,7 @@
                             this.depositList = response.result.records;
                             this.depositListPager.total = response.result.total;
                             this.depositListLoading = false;
-                            console.log("dep: "+response.result.total);
+                            console.log("dep: " + response.result.total);
                         }
                     }).catch((error) => {
                     console.log(error)
@@ -555,12 +638,17 @@
 <style lang="less">
     @import "./../../assets/css/style";
 
+
+    .el-tabs .el-tabs__header {
+        margin: 0 01px;
+    }
+
     .address-info {
         //min-height: 800px;
         margin-bottom: 10px;
 
         .bg-white {
-            height: 100px;
+            height: 50px;
 
             .title {
                 padding-bottom: 0px;
@@ -582,7 +670,7 @@
         }
 
         .top {
-            margin: -24px auto 0;
+            margin: -2px auto 0;
             height: 255px;
             @media screen and (max-width: 1000px) {
                 height: auto;
@@ -615,8 +703,8 @@
             }
 
             .order {
-                width: 680px;
-                height: 300px;
+                width: 620px;
+                height: 255px;
                 float: left
             }
 
@@ -703,8 +791,34 @@
             }
         }
 
+        .buyToken {
+            .order_row {
+                padding-top: 15px;
+
+                .order_label {
+                    width: 60px;
+                    float: left;
+                    display: inline;
+                    padding: 10px 0 0 5px;
+                }
+
+                .order_input {
+                    width: 200px;
+                    float: left;
+                    display: inline;
+                }
+
+                .order_span {
+                    width: 60px;
+                    float: left;
+                    display: inline;
+                    padding: 10px 0 0 5px;
+                }
+            }
+        }
+
         .bottoms {
-            margin: 30px auto 14px;
+            margin: 0px auto 14px;
             @media screen and (max-width: 1000px) {
                 margin: 1.5rem auto 1.5rem ;
                 width: 95%;
