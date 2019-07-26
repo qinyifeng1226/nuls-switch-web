@@ -78,7 +78,8 @@ const cn ={
     "output":"输出",
     "searchTip":"地址/高度/txhash/...",
     "copy":"点击复制",
-    "copysuccess":"复制成功"
+    "copysuccess":"复制成功",
+    "errorPwd": "密码错误"
   },
 
   "type": {
@@ -316,7 +317,11 @@ const cn ={
     "buy":"买入",
     "sell":"卖出",
     "currentDeposit":"当前委托",
-    "hisDeposit":"历史委托"
+    "hisDeposit":"历史委托",
+    "nullTxNum": "请输入交易数量",
+    "mustNum": "交易数量必须数字值",
+    "insufficientBalance": "对不起，余额不足",
+    "txNumError": "交易数量不小于0"
   },
   "orderInfo":{
     "price":"价格",

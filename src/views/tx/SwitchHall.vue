@@ -18,6 +18,7 @@
         <div class="top w1200">
             <div class="order">
                 <div class="top-left fl">
+                    <el-form :model="buyTokenOrderForm" :rules="buyTokenOrderRules" ref="buyTokenOrderForm">
                     <h3 class="tabs_title tabs_header capitalize">{{$t('switch.myWantBuy')}}</h3>
                     <div class="order_left">
                         <el-row class="order_row">
@@ -40,24 +41,26 @@
                             <div class="order_label"><span>USDT</span></div>
                         </el-row>
                         <el-row class="order_btn_row">
-                            <el-button type="primary">{{$t('switch.buy')}}</el-button>
+                            <el-button type="primary" @click="submitForm('buyTokenOrderForm')">{{$t('switch.buy')}}</el-button>
                         </el-row>
                     </div>
+                    </el-form>
                 </div>
                 <div class="top-left fl">
+                    <el-form :model="sellTokenOrderForm" :rules="sellTokenOrderRules" ref="sellTokenOrderForm">
                     <h3 class="tabs_title tabs_header capitalize">{{$t('switch.myWantSell')}}</h3>
                     <div class="order_left">
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.price')}}：</span></div>
                             <div class="order_input">
-                                <el-input type="input" v-model="buyTokenOrderForm.price" placeholder="请设置单价"></el-input>
+                                <el-input type="input" v-model="sellTokenOrderForm.price" placeholder="请设置单价"></el-input>
                             </div>
                             <div class="order_span"><span>USDT</span></div>
                         </el-row>
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
                             <div class="order_input">
-                                <el-input type="input" v-model="buyTokenOrderForm.txNum" placeholder="请输入购买数量"></el-input>
+                                <el-input type="input" v-model="sellTokenOrderForm.txNum" placeholder="请输入购买数量"></el-input>
                             </div>
                             <div class="order_span"><span>NULS</span></div>
                         </el-row>
@@ -70,6 +73,7 @@
                             <el-button type="primary">{{$t('switch.sell')}}</el-button>
                         </el-row>
                     </div>
+                    </el-form>
                 </div>
             </div>
 
@@ -196,19 +200,44 @@
                 </el-button>
             </div>
         </el-dialog>
+        <Password ref="password" @passwordSubmit="passSubmit">
+        </Password>
     </div>
 </template>
 
 <script>
-    //import nuls from 'nuls-sdk-js'
+    import nuls from 'nuls-sdk-js'
+    import Password from '@/components/PasswordBar'
     import moment from 'moment'
-    import {getLocalTime, superLong, copys, timesDecimals, Plus} from '@/api/util.js'
+    import {getLocalTime, superLong, copys, timesDecimals, Plus,chainID} from '@/api/util.js'
     import {listOnSell} from '@/api/requestData'
 
     export default {
         data() {
+            let checkAmount = (rule, value, callback) => {
+                let re = /^\d+(?=\.{0,1}\d+$|$)/;
+                let res = /^\d{1,8}(\.\d{1,8})?$/;
+                let balance = this.balanceInfo.balance - value * 100000000;
+                if (!value) {
+                    return callback(new Error(this.$t('switch.nullTxNum')));
+                } else if (!re.exec(value) || !res.exec(value)) {
+                    callback(new Error(this.$t('switch.mustNum')));
+                } else if (balance < 0.001) {
+                    callback(new Error(this.$t('switch.insufficientBalance')));
+                } else if (value < 0) {
+                    callback(new Error(this.$t('switch.txNumError')));
+                } else {
+                    callback();
+                }
+            };
             return {
+                balanceInfo: {},//账户余额信息
+                accountAddress: JSON.parse(localStorage.getItem('accountInfo')),
                 buyTokenOrderForm: {
+                    price: '',
+                    txNum: '',
+                },
+                sellTokenOrderForm: {
                     price: '',
                     txNum: '',
                 },
@@ -304,10 +333,22 @@
                 //tokenValue: '',
                 //地址定时器
                 addressInterval: null,
+                buyTokenOrderRules: {
+                    // rewardAddress: [
+                    //     {validator: checkRewardAddress, trigger: ['blur', 'change']},
+                    // ],
+                    txNum: [
+                        {validator: checkAmount, trigger: ['blur', 'change']}
+                    ]
+                },
+                sellTokenOrderRules:{
+
+                }
             }
         },
         components: {
             //SelectBar
+            Password
         },
         created() {
             this.isMobile = /(iPhone|iOS|Android|Windows Phone)/i.test(navigator.userAgent);
@@ -336,6 +377,34 @@
             }
         },
         methods: {
+            /**
+             * 买入挂单提交
+             * @param formName
+             **/
+            async submitForm(formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        //this.newConsensusVisible = true;
+                        this.$refs.password.showPassword(true);
+                    } else {
+                        return false;
+                    }
+                });
+            },
+            /**
+             *  获取密码框的密码
+             * @param password
+             **/
+            async passSubmit(password) {
+                const pri = nuls.decrypteOfAES(this.accountAddress.aesPri, password);
+                const newAddressInfo = nuls.importByKey(chainID(), pri, password);
+                if (newAddressInfo.address === this.accountAddress.address) {
+                    //this.keyDialog = true;
+                    this.accountAddress.pri = pri;
+                }else {
+                    this.$message({message: this.$t('public.errorPwd'), type: 'error', duration: 1000});
+                }
+            },
             /**
              * 复制方法
              * @param sting
@@ -423,9 +492,9 @@
                 this.$refs['buyTokenForm'].resetFields();
                 this.buyTokenVisible = false;
             },
-            showPassword(boolean) {
-                this.buyTokenVisible = boolean;
-            },
+            // showPassword(boolean) {
+            //     this.buyTokenVisible = boolean;
+            // },
             //弹出密码输入框
             dialogSubmit(formName) {
                 this.$refs[formName].validate((valid) => {
