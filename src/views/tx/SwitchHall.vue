@@ -2,17 +2,7 @@
     <div class="address-info bg-gray">
         <div class="bg-white">
             <div class="title font24 w1200">
-                <el-select v-model="fromTokenId" @change="changeTokenType">
-                    <el-option v-for="item in fromTokenOptions" :key="item.tokenId" :label="item.tokenSymbol"
-                               :value="item.tokenId">
-                    </el-option>
-                </el-select>
-                —>
-                <el-select v-model="toTokenId">
-                    <el-option v-for="item in toTokenOptions" :key="item.tokenId" :label="item.tokenSymbol"
-                               :value="item.tokenId">
-                    </el-option>
-                </el-select>
+                <SelectTokenBar @change="changeTokenType"></SelectTokenBar>
             </div>
         </div>
         <div class="top w1200">
@@ -208,9 +198,10 @@
 <script>
     import nuls from 'nuls-sdk-js'
     import Password from '@/components/PasswordBar'
-    import moment from 'moment'
-    import {getLocalTime, superLong, copys, timesDecimals, Plus,chainID} from '@/api/util.js'
-    import {listOnSell} from '@/api/requestData'
+    import SelectTokenBar from '@/components/SelectTokenBar'
+    import {copys,chainID} from '@/api/util.js'
+    //import moment from 'moment'
+    //import {listOnSell} from '@/api/requestData'
 
     export default {
         data() {
@@ -347,7 +338,7 @@
             }
         },
         components: {
-            //SelectBar
+            SelectTokenBar,
             Password
         },
         created() {
@@ -384,7 +375,6 @@
             async submitForm(formName) {
                 this.$refs[formName].validate((valid) => {
                     if (valid) {
-                        //this.newConsensusVisible = true;
                         this.$refs.password.showPassword(true);
                     } else {
                         return false;
@@ -399,7 +389,6 @@
                 const pri = nuls.decrypteOfAES(this.accountAddress.aesPri, password);
                 const newAddressInfo = nuls.importByKey(chainID(), pri, password);
                 if (newAddressInfo.address === this.accountAddress.address) {
-                    //this.keyDialog = true;
                     this.accountAddress.pri = pri;
                 }else {
                     this.$message({message: this.$t('public.errorPwd'), type: 'error', duration: 1000});
@@ -417,7 +406,7 @@
             /**
              * 获地址详细信息
              */
-            getAddressInfo(address) {
+            //getAddressInfo(address) {
                 // this.$post('/', 'getAccount', [address])
                 //     .then((response) => {
                 //         //console.log(response);
@@ -452,7 +441,7 @@
                 //             this.addressInfo = response.result;
                 //         }
                 //     })
-            },
+            //},
 
             /**
              * tab 选项
@@ -492,9 +481,6 @@
                 this.$refs['buyTokenForm'].resetFields();
                 this.buyTokenVisible = false;
             },
-            // showPassword(boolean) {
-            //     this.buyTokenVisible = boolean;
-            // },
             //弹出密码输入框
             dialogSubmit(formName) {
                 this.$refs[formName].validate((valid) => {
@@ -622,23 +608,10 @@
             /**
              * 选择代币类型
              **/
-            // changeToken() {
-            //     this.getTokenListByAddress(this.sellListPager.page, this.sellListPager.rows, this.address, this.tokenValue);
-            // },
-
-            changeTokenType() {
-                console.log("size: " + this.fromTokenOptions.length)
-                //循环fromTokenOptions数组
-                for (let i = 0; i < this.fromTokenOptions.length; i++) {
-                    //如果当前点击的数组value等于他自己当前v-model
-                    console.log("fromtokenid: " + this.fromTokenId);
-                    console.log("for fid: " + this.fromTokenOptions[i].tokenId)
-                    if (this.fromTokenOptions[i].tokenId == this.fromTokenId) {
-                        //就把数组label绑定le2list
-                        console.log(this.fromTokenOptions[i].switchTokenList)
-                        this.toTokenOptions = this.fromTokenOptions[i].switchTokenList;
-                    }
-                }
+            changeTokenType(fromTokenId, toTokenId) {
+                this.$message(fromTokenId+"==="+toTokenId);
+                this.fromTokenId = fromTokenId;
+                this.toTokenId = toTokenId;
             },
 
             /**
@@ -666,23 +639,6 @@
                 })
 
             },
-
-            /**
-             * 获取交易类型
-             **/
-            // changeType(type) {
-            //     this.buyListLoading = true;
-            //     this.typeRegion = parseInt(type);
-            //     this.getTxListByAddress(this.buyListPager.page, this.buyListPager.rows, this.address, this.typeRegion, this.hideSwitch);
-            // },
-
-            /**
-             * 隐藏共识奖励
-             */
-            // hideConsensusList() {
-            //     this.buyListLoading = true;
-            //     this.getTxListByAddress(this.txListPager.page, this.txListPager.rows, this.address, this.typeRegion, this.hideSwitch);
-            // },
 
         },
 
