@@ -6,6 +6,7 @@ axios.defaults.timeout = config.API_TIME;
 axios.defaults.baseURL = config.API_URL;
 axios.defaults.headers.post['Content-Type'] = 'application/json';
 
+//axios.defaults.headers.common['Authentication'] = 12345;//localStorage.getItem('accountInfo').token;
 /**
  * 封装post请求，调用nuls2.0后端api
  * Encapsulation post method
@@ -40,6 +41,9 @@ export function post_nuls(url, methodName, data = []) {
  */
 export function post(url, methodName, params = {}) {
     return new Promise((resolve, reject) => {
+        let token = localStorage.getItem('accountInfo') != null ? JSON.parse(localStorage.getItem('accountInfo')).token : '';
+        let headers = {"headers": {"Authorization": token}};
+        params = {...params, ...headers};
         url += methodName;
         axios.post(url, params)
             .then(response => {
@@ -60,13 +64,16 @@ export function post(url, methodName, params = {}) {
  */
 export function get(url, methodName, data = {}) {
     return new Promise((resolve, reject) => {
-        const params = {"params": data};
+        let params = {"params": data};
+        let token = localStorage.getItem('accountInfo') != null ? JSON.parse(localStorage.getItem('accountInfo')).token : '';
+        let headers = {"headers": {"Authorization": token}};
+        params = {...params, ...headers};
         url += methodName;
-        console.log(params);
+        //console.log(params);
         axios.get(url, params)
             .then(response => {
                 resolve(response.data)
-                console.log(response.data)
+                //console.log(response.data)
             }, err => {
                 reject(err)
             })
