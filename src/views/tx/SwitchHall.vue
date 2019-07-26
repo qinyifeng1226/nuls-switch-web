@@ -14,14 +14,18 @@
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.price')}}：</span></div>
                             <div class="order_input">
+                                <el-form-item prop="price">
                                 <el-input type="input" v-model="buyTokenOrderForm.price" placeholder="请设置单价"></el-input>
+                                </el-form-item>
                             </div>
                             <div class="order_span"><span>USDT</span></div>
                         </el-row>
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
                             <div class="order_input">
+                                <el-form-item prop="txNum">
                                 <el-input type="input" v-model="buyTokenOrderForm.txNum" placeholder="请输入购买数量"></el-input>
+                                </el-form-item>
                             </div>
                             <div class="order_span"><span>NULS</span></div>
                         </el-row>
@@ -209,6 +213,7 @@
                 let re = /^\d+(?=\.{0,1}\d+$|$)/;
                 let res = /^\d{1,8}(\.\d{1,8})?$/;
                 let balance = this.balanceInfo.balance - value * 100000000;
+                this.$message("==="+balance);
                 if (!value) {
                     return callback(new Error(this.$t('switch.nullTxNum')));
                 } else if (!re.exec(value) || !res.exec(value)) {
@@ -221,7 +226,25 @@
                     callback();
                 }
             };
+            let validateAlias = (rule, value, callback) => {
+                let patrn = /^(?!_)(?!.*?_$)[a-z0-9_]+$/;
+                if (value === '') {
+                    callback(new Error(this.$t('setAlias.setAlias4')));
+                } else if (!patrn.exec(value)) {
+                    callback(new Error(this.$t('setAlias.setAlias5')));
+                } else {
+                    callback();
+                }
+            };
             return {
+                aliasForm: {
+                    alias: '',
+                },
+                aliasRules: {
+                    alias: [
+                        {validator: validateAlias, trigger: 'blur'}
+                    ]
+                },
                 balanceInfo: {},//账户余额信息
                 accountAddress: JSON.parse(localStorage.getItem('accountInfo')),
                 buyTokenOrderForm: {
@@ -281,47 +304,7 @@
                 //隐藏共识奖励
                 hideSwitch: false,
                 fromTokenId: '',
-                fromTokenOptions: [{
-                    'tokenId': 1,
-                    'tokenSymbol': 'NULS',
-                    'switchTokenList': [
-                        {
-                            'tokenId': 2,
-                            'tokenSymbol': 'USDT'
-                        },
-                        {
-                            'tokenId': 3,
-                            'tokenSymbol': 'ETH'
-                        },
-                        {
-                            'tokenId': 4,
-                            'tokenSymbol': 'BTC'
-                        }
-                    ]
-                }, {
-                    'tokenId': 2,
-                    'tokenSymbol': 'USDT',
-                    'switchTokenList': [
-                        {
-                            'tokenId': 1,
-                            'tokenSymbol': 'NULS'
-                        },
-                        {
-                            'tokenId': 3,
-                            'tokenSymbol': 'ETH'
-                        },
-                        {
-                            'tokenId': 4,
-                            'tokenSymbol': 'BTC'
-                        }
-                    ]
-                }
-                ],
                 toTokenId: '',
-                toTokenOptions: [],
-                tokenOptions: [],
-                //token类型
-                //tokenValue: '',
                 //地址定时器
                 addressInterval: null,
                 buyTokenOrderRules: {
@@ -368,6 +351,23 @@
             }
         },
         methods: {
+            /**
+             * 设置别名
+             * @param formName
+             */
+            submitAliasForm(formName) {
+                this.$refs[formName].validate((valid) => {
+                    if (valid) {
+                        if (this.balanceInfo.balance > 100100000) {
+                            this.$refs.password.showPassword(true);
+                        } else {
+                            this.$message({message: this.$t('newConsensus.newConsensus7'), type: 'error', duration: 1000});
+                        }
+                    } else {
+                        return false;
+                    }
+                });
+            },
             /**
              * 买入挂单提交
              * @param formName
@@ -545,9 +545,7 @@
                     "toTokenId": this.toTokenId
                 };
                 this.$get('/v1/order/listOnBuy', '', params)
-                //this.$get('/', 'getTokenTransfers', [page, rows, address, contractAddress])
                     .then((response) => {
-                        //console.log(response);
                         if (response.hasOwnProperty("result")) {
                             // for (let item of response.result.list) {
                             //   item.createTime = moment(getLocalTime(item.time)).format('YYYY-MM-DD HH:mm:ss');
