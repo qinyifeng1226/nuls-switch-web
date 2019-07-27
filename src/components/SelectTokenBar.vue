@@ -59,6 +59,14 @@
                     .then((response) => {
                         if (response.hasOwnProperty("result")) {
                             this.fromTokenOptions = response.result;
+                            if (this.fromTokenOptions.length > 0) {
+                                this.fromTokenId = this.fromTokenOptions[0].tokenId;
+                                this.toTokenOptions = this.fromTokenOptions[0].switchTokenList;
+                                if (this.toTokenOptions.length > 0) {
+                                    this.toTokenId = this.toTokenOptions[0].tokenId;
+                                }
+                            }
+                            this.$emit('change', this.fromTokenId, this.toTokenId);
                         }
                     }).catch((error) => {
                     console.log(error)

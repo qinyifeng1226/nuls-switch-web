@@ -262,7 +262,6 @@ export async function getContractConstructor(contractCodeHex) {
  * @returns {Promise<any>}
  **/
 export async function listOnSell(params) {
-  //todo 这个接口是临时处理，后面要换一个接口，否则超过100个委托会出问题
   return await get('/', '/v1/order/listOnSell', params)
       .then((response) => {
         return response.result;
@@ -287,4 +286,22 @@ export async function getToken(params) {
       });
 }
 
+/**
+ * 创建交易订单
+ * @param order
+ * @returns {Promise<any>}
+ **/
+export async function createOrder(params) {
+  return await post('/v1/order/', 'createOrder', params)
+      .then((response) => {
+        if (response.hasOwnProperty("result")) {
+          return {success: true, data: response.result};
+        } else {
+          return {success: false, data: response.error};
+        }
+      })
+      .catch((error) => {
+        return {success: false, data: error};
+      });
+}
 

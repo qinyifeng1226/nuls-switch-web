@@ -318,10 +318,14 @@ const cn ={
     "sell":"卖出",
     "currentDeposit":"当前委托",
     "hisDeposit":"历史委托",
+    "nullPrice": "请输入单价",
     "nullTxNum": "请输入交易数量",
-    "mustNum": "交易数量必须数字值",
+    "mustNum": "必须数字值",
+    "mustNotZero":"必须大于0",
     "insufficientBalance": "对不起，余额不足",
-    "txNumError": "交易数量不小于0"
+    "txNumError": "交易数量不小于0",
+    "createOrderSuccess": "挂单成功",
+    "createOrderError": "挂单失败"
   },
   "orderInfo":{
     "price":"价格",

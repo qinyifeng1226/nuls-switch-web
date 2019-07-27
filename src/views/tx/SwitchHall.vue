@@ -7,6 +7,7 @@
         </div>
         <div class="top w1200">
             <div class="order">
+                <!-- 买入挂单 -->
                 <div class="top-left fl">
                     <el-form :model="buyTokenOrderForm" :rules="buyTokenOrderRules" ref="buyTokenOrderForm">
                     <h3 class="tabs_title tabs_header capitalize">{{$t('switch.myWantBuy')}}</h3>
@@ -15,7 +16,7 @@
                             <div class="order_label"><span>{{$t('orderInfo.price')}}：</span></div>
                             <div class="order_input">
                                 <el-form-item prop="price">
-                                <el-input type="input" v-model="buyTokenOrderForm.price" placeholder="请设置单价"></el-input>
+                                    <el-input type="input" v-model="buyTokenOrderForm.price" :placeholder="$t('switch.nullPrice')"></el-input>
                                 </el-form-item>
                             </div>
                             <div class="order_span"><span>USDT</span></div>
@@ -23,8 +24,8 @@
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
                             <div class="order_input">
-                                <el-form-item prop="txNum">
-                                <el-input type="input" v-model="buyTokenOrderForm.txNum" placeholder="请输入购买数量"></el-input>
+                                <el-form-item prop="totalNum">
+                                    <el-input type="input" v-model="buyTokenOrderForm.totalNum" :placeholder="$t('switch.nullTxNum')"></el-input>
                                 </el-form-item>
                             </div>
                             <div class="order_span"><span>NULS</span></div>
@@ -35,11 +36,12 @@
                             <div class="order_label"><span>USDT</span></div>
                         </el-row>
                         <el-row class="order_btn_row">
-                            <el-button type="primary" @click="submitForm('buyTokenOrderForm')">{{$t('switch.buy')}}</el-button>
+                            <el-button type="primary" @click="submitCreateOrder('buyTokenOrderForm',1)">{{$t('switch.buy')}}</el-button>
                         </el-row>
                     </div>
                     </el-form>
                 </div>
+                <!-- 买出挂单 -->
                 <div class="top-left fl">
                     <el-form :model="sellTokenOrderForm" :rules="sellTokenOrderRules" ref="sellTokenOrderForm">
                     <h3 class="tabs_title tabs_header capitalize">{{$t('switch.myWantSell')}}</h3>
@@ -47,14 +49,18 @@
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.price')}}：</span></div>
                             <div class="order_input">
-                                <el-input type="input" v-model="sellTokenOrderForm.price" placeholder="请设置单价"></el-input>
+                                <el-form-item prop="price">
+                                    <el-input type="input" v-model="sellTokenOrderForm.price" :placeholder="$t('switch.nullPrice')"></el-input>
+                                </el-form-item>
                             </div>
                             <div class="order_span"><span>USDT</span></div>
                         </el-row>
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
                             <div class="order_input">
-                                <el-input type="input" v-model="sellTokenOrderForm.txNum" placeholder="请输入购买数量"></el-input>
+                                <el-form-item prop="totalNum">
+                                    <el-input type="input" v-model="sellTokenOrderForm.totalNum" :placeholder="$t('switch.nullTxNum')"></el-input>
+                                </el-form-item>
                             </div>
                             <div class="order_span"><span>NULS</span></div>
                         </el-row>
@@ -64,13 +70,13 @@
                             <div class="order_label"><span>NULS</span></div>
                         </el-row>
                         <el-row class="order_btn_row">
-                            <el-button type="primary">{{$t('switch.sell')}}</el-button>
+                            <el-button type="primary" @click="submitCreateOrder('sellTokenOrderForm',2)">{{$t('switch.sell')}}</el-button>
                         </el-row>
                     </div>
                     </el-form>
                 </div>
             </div>
-
+            <!-- 挂单列表 -->
             <div class="top-right fr">
                 <el-tabs v-model="activeName" @tab-click="handleClick">
                     <el-tab-pane :label="$t('switch.myWantBuy')" name="buyTab">
@@ -127,6 +133,7 @@
             </div>
         </div>
         <div class="cb"></div>
+        <!-- 当前委托列表 -->
         <div class="bottoms w1200 cb">
             <el-tabs v-model="depositActiveName">
                 <el-tab-pane :label="$t('switch.currentDeposit')" name="depositTab">
@@ -205,55 +212,42 @@
     import SelectTokenBar from '@/components/SelectTokenBar'
     import {copys,chainID} from '@/api/util.js'
     //import moment from 'moment'
-    //import {listOnSell} from '@/api/requestData'
+    import {createOrder} from '@/api/requestData'
 
     export default {
         data() {
-            let checkAmount = (rule, value, callback) => {
+            let validatePrice = (rule, value, callback) => {
+                if (!value) {
+                    callback(new Error(this.$t('switch.nullPrice')));
+                } else if (value <= 0) {
+                    callback(new Error(this.$t('switch.mustNotZero')));
+                } else {
+                    callback();
+                }
+            };
+            let validateTxNum = (rule, value, callback) => {
                 let re = /^\d+(?=\.{0,1}\d+$|$)/;
                 let res = /^\d{1,8}(\.\d{1,8})?$/;
-                let balance = this.balanceInfo.balance - value * 100000000;
-                this.$message("==="+balance);
                 if (!value) {
                     return callback(new Error(this.$t('switch.nullTxNum')));
                 } else if (!re.exec(value) || !res.exec(value)) {
                     callback(new Error(this.$t('switch.mustNum')));
-                } else if (balance < 0.001) {
-                    callback(new Error(this.$t('switch.insufficientBalance')));
                 } else if (value < 0) {
                     callback(new Error(this.$t('switch.txNumError')));
                 } else {
                     callback();
                 }
             };
-            let validateAlias = (rule, value, callback) => {
-                let patrn = /^(?!_)(?!.*?_$)[a-z0-9_]+$/;
-                if (value === '') {
-                    callback(new Error(this.$t('setAlias.setAlias4')));
-                } else if (!patrn.exec(value)) {
-                    callback(new Error(this.$t('setAlias.setAlias5')));
-                } else {
-                    callback();
-                }
-            };
             return {
-                aliasForm: {
-                    alias: '',
-                },
-                aliasRules: {
-                    alias: [
-                        {validator: validateAlias, trigger: 'blur'}
-                    ]
-                },
                 balanceInfo: {},//账户余额信息
                 accountAddress: JSON.parse(localStorage.getItem('accountInfo')),
                 buyTokenOrderForm: {
                     price: '',
-                    txNum: '',
+                    totalNum: '',
                 },
                 sellTokenOrderForm: {
                     price: '',
-                    txNum: '',
+                    totalNum: '',
                 },
                 buyTokenForm: {
                     txNum: '',
@@ -264,10 +258,9 @@
                 activeName: 'buyTab',
                 depositActiveName: 'depositTab',
                 //交易类型
-                typeRegion: 0,
+                txType: 0,
                 //地址
-                //address: this.$route.query.address,
-                address: 'my',
+                address: localStorage.getItem('accountInfo') != null ? JSON.parse(localStorage.getItem('accountInfo')).address : '',
                 //地址详情
                 addressInfo: [],
                 addressNumber: [],
@@ -308,11 +301,11 @@
                 //地址定时器
                 addressInterval: null,
                 buyTokenOrderRules: {
-                    // rewardAddress: [
-                    //     {validator: checkRewardAddress, trigger: ['blur', 'change']},
-                    // ],
-                    txNum: [
-                        {validator: checkAmount, trigger: ['blur', 'change']}
+                    price: [
+                        {validator: validatePrice, trigger: ['blur', 'change']},
+                    ],
+                    totalNum: [
+                        {validator: validateTxNum, trigger: ['blur', 'change']}
                     ]
                 },
                 sellTokenOrderRules:{
@@ -352,29 +345,13 @@
         },
         methods: {
             /**
-             * 设置别名
-             * @param formName
-             */
-            submitAliasForm(formName) {
-                this.$refs[formName].validate((valid) => {
-                    if (valid) {
-                        if (this.balanceInfo.balance > 100100000) {
-                            this.$refs.password.showPassword(true);
-                        } else {
-                            this.$message({message: this.$t('newConsensus.newConsensus7'), type: 'error', duration: 1000});
-                        }
-                    } else {
-                        return false;
-                    }
-                });
-            },
-            /**
-             * 买入挂单提交
+             * 买入/卖出挂单提交
              * @param formName
              **/
-            async submitForm(formName) {
+            async submitCreateOrder(formName,txType) {
                 this.$refs[formName].validate((valid) => {
                     if (valid) {
+                        this.txType=txType;
                         this.$refs.password.showPassword(true);
                     } else {
                         return false;
@@ -389,7 +366,25 @@
                 const pri = nuls.decrypteOfAES(this.accountAddress.aesPri, password);
                 const newAddressInfo = nuls.importByKey(chainID(), pri, password);
                 if (newAddressInfo.address === this.accountAddress.address) {
-                    this.accountAddress.pri = pri;
+                    // 创建订单提交
+                    let params = {
+                        "txType": this.txType,
+                        "address": newAddressInfo.address,
+                        "fromTokenId": this.fromTokenId,
+                        "toTokenId": this.toTokenId,
+                        "price": this.buyTokenOrderForm.price,
+                        "totalNum": this.buyTokenOrderForm.totalNum
+                    };
+                    await createOrder(params).then((response) => {
+                        console.log(response);
+                        if (response.success) {
+                            this.$message({message: this.$t('switch.createOrderSuccess'), type: 'success', duration: 1000});
+                        } else {
+                            this.$message({message: this.$t('switch.createOrderError') + response.data, type: 'error', duration: 1000});
+                        }
+                    }).catch((err) => {
+                        this.$message({message: this.$t('switch.createOrderError') + err, type: 'error', duration: 1000});
+                    });
                 }else {
                     this.$message({message: this.$t('public.errorPwd'), type: 'error', duration: 1000});
                 }
