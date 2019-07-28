@@ -210,7 +210,7 @@
     import nuls from 'nuls-sdk-js'
     import Password from '@/components/PasswordBar'
     import SelectTokenBar from '@/components/SelectTokenBar'
-    import {copys,chainID} from '@/api/util.js'
+    import {copys, chainID, timesDecimals, multiDecimals} from '@/api/util.js'
     //import moment from 'moment'
     import {createOrder} from '@/api/requestData'
 
@@ -374,6 +374,9 @@
             async passSubmit(password) {
                 const pri = nuls.decrypteOfAES(this.accountAddress.aesPri, password);
                 const newAddressInfo = nuls.importByKey(chainID(), pri, password);
+                let price=this.txType == 1 ? this.buyTokenOrderForm.price : this.sellTokenOrderForm.price;
+                let totalNum=this.txType == 1 ? this.buyTokenOrderForm.totalNum : this.sellTokenOrderForm.totalNum
+
                 if (newAddressInfo.address === this.accountAddress.address) {
                     // 创建订单提交
                     let params = {
@@ -381,8 +384,8 @@
                         "address": newAddressInfo.address,
                         "fromTokenId": this.fromTokenId,
                         "toTokenId": this.toTokenId,
-                        "price": this.txType == 1 ? this.buyTokenOrderForm.price : this.sellTokenOrderForm.price,
-                        "totalNum": this.txType == 1 ? this.buyTokenOrderForm.totalNum : this.sellTokenOrderForm.totalNum
+                        "price": multiDecimals(price, 8),
+                        "totalNum": multiDecimals(totalNum, 8)
                     };
                     await createOrder(params).then((response) => {
                         console.log(response);
@@ -518,11 +521,11 @@
                     .then((response) => {
                         //console.log(response);
                         if (response.hasOwnProperty("result")) {
-                            // for (let item of response.result.records) {
-                            //     item.createTime = moment(getLocalTime(item.createTime)).format('YYYY-MM-DD HH:mm:ss');
-                            //     item.price = timesDecimals(item.price, 8);
-                            //     item.totalNum = timesDecimals(item.totalNum, 8);
-                            // }
+                            for (let item of response.result.records) {
+                                //item.createTime = moment(getLocalTime(item.createTime)).format('YYYY-MM-DD HH:mm:ss');
+                                item.price = timesDecimals(item.price, 8);
+                                item.totalNum = timesDecimals(item.totalNum, 8);
+                            }
                             this.buyList = response.result.records;
                             this.buyListPager.total = response.result.total;
                             this.buyListLoading = false;
@@ -557,16 +560,11 @@
                 this.$get('/v1/order/listOnBuy', '', params)
                     .then((response) => {
                         if (response.hasOwnProperty("result")) {
-                            // for (let item of response.result.list) {
-                            //   item.createTime = moment(getLocalTime(item.time)).format('YYYY-MM-DD HH:mm:ss');
-                            //   item.fromAddresss = superLong(item.fromAddress, 6);
-                            //   item.toAddresss = superLong(item.toAddress, 6);
-                            //   item.value = timesDecimals(item.value, item.decimals);
-                            //   item.fromBalance = timesDecimals(item.fromBalance, item.decimals);
-                            //   item.toBalance = timesDecimals(item.toBalance, item.decimals);
-                            //   item.txHashs = superLong(item.txHash, 10);
-                            //   item.showValue = this.address === item.toAddress;
-                            // }
+                            for (let item of response.result.records) {
+                                //item.createTime = moment(getLocalTime(item.time)).format('YYYY-MM-DD HH:mm:ss');
+                                item.price = timesDecimals(item.price, 8);
+                                item.totalNum = timesDecimals(item.totalNum, 8);
+                            }
                             this.sellList = response.result.records;
                             this.sellListPager.total = response.result.total;
                             this.sellListLoading = false;
@@ -591,11 +589,12 @@
                 this.$get('/v1/order/queryMyCurrentOrder', '', params)
                     .then((response) => {
                         if (response.hasOwnProperty("result")) {
-                            // for (let item of response.result.records) {
-                            //     item.createTime = moment(getLocalTime(item.createTime)).format('YYYY-MM-DD HH:mm:ss');
-                            //     item.price = timesDecimals(item.price, 8);
-                            //     item.totalNum = timesDecimals(item.totalNum, 8);
-                            // }
+                            for (let item of response.result.records) {
+                                //item.createTime = moment(getLocalTime(item.createTime)).format('YYYY-MM-DD HH:mm:ss');
+                                item.price = timesDecimals(item.price, 8);
+                                item.txNum = timesDecimals(item.txNum, 8);
+                                item.totalNum = timesDecimals(item.totalNum, 8);
+                            }
                             this.depositList = response.result.records;
                             this.depositListPager.total = response.result.total;
                             this.depositListLoading = false;
