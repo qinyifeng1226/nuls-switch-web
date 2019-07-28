@@ -20,9 +20,11 @@
         data() {
             return {
                 fromTokenId: '',
+                fromTokenSymbol: '',
+                toTokenId: '',
+                toTokenSymbol: '',
                 //源TOKEN下框列表
                 fromTokenOptions: [],
-                toTokenId: '',
                 //目标TOKEN下框列表
                 toTokenOptions: []
             }
@@ -36,20 +38,26 @@
                 for (let i = 0; i < this.fromTokenOptions.length; i++) {
                     //如果当前点击的数组value等于他自己当前v-model
                     if (this.fromTokenOptions[i].tokenId == this.fromTokenId) {
+                        this.fromTokenSymbol = this.fromTokenOptions[i].tokenSymbol;
                         //就把数组label绑定le2list
-                        console.log(this.fromTokenOptions[i].switchTokenList)
                         this.toTokenOptions = this.fromTokenOptions[i].switchTokenList;
                         if (this.toTokenOptions.length > 0) {
                             this.toTokenId = this.toTokenOptions[0].tokenId;
+                            this.toTokenSymbol = this.toTokenOptions[0].tokenSymbol;
                         } else {
                             this.toTokenId = '';
                         }
                     }
                 }
-                this.$emit('change', this.fromTokenId, this.toTokenId);
+                this.$emit('change', this.fromTokenId, this.toTokenId, this.fromTokenSymbol, this.toTokenSymbol);
             },
             changeToTokenType() {
-                this.$emit('change', this.fromTokenId, this.toTokenId);
+                let obj = {};
+                obj = this.toTokenOptions.find((item) => {
+                    return item.tokenId === this.toTokenId;
+                });
+                this.toTokenSymbol = obj.tokenSymbol;
+                this.$emit('change', this.fromTokenId, this.toTokenId, this.fromTokenSymbol, this.toTokenSymbol);
             },
             /**
              * 获取所有支持兑换代币列表
@@ -61,12 +69,14 @@
                             this.fromTokenOptions = response.result;
                             if (this.fromTokenOptions.length > 0) {
                                 this.fromTokenId = this.fromTokenOptions[0].tokenId;
+                                this.fromTokenSymbol = this.fromTokenOptions[0].tokenSymbol;
                                 this.toTokenOptions = this.fromTokenOptions[0].switchTokenList;
                                 if (this.toTokenOptions.length > 0) {
                                     this.toTokenId = this.toTokenOptions[0].tokenId;
+                                    this.toTokenSymbol = this.toTokenOptions[0].tokenSymbol;
                                 }
                             }
-                            this.$emit('change', this.fromTokenId, this.toTokenId);
+                            this.$emit('change', this.fromTokenId, this.toTokenId, this.fromTokenSymbol, this.toTokenSymbol);
                         }
                     }).catch((error) => {
                     console.log(error)

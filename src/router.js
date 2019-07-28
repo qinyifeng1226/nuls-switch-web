@@ -29,11 +29,20 @@ export default new Router({
       path: '/BackupsAddress',
       name: 'backupsAddress',
       component: BackupsAddress
-    }
-    ,
+    },
     {
       path: '/SwitchHall',
       name: 'switchHall',
+      component: SwitchHall
+    },
+    {
+      path: '/SwitchHall',
+      name: 'myAssets',
+      component: SwitchHall
+    },
+    {
+      path: '/SwitchHall',
+      name: 'myOrder',
       component: SwitchHall
     }
   ]

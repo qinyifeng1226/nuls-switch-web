@@ -6,9 +6,10 @@
       </div>
       <div class="nav fl">
         <el-menu :default-active="activeIndex" class="fl" mode="horizontal" @select="handleSelect">
-          <el-menu-item index="1"><i class="el-icon-share"></i>模块仓库</el-menu-item>
-          <el-menu-item index="3"><i class="el-icon-video-camera-solid"></i>搭建区块链</el-menu-item>
           <el-menu-item index="switchHall"><i class="el-icon-video-camera-solid"></i>交易大厅</el-menu-item>
+          <el-menu-item index="myAssets"><i class="el-icon-share"></i>资产列表</el-menu-item>
+          <el-menu-item index="myOrder"><i class="el-icon-video-camera-solid"></i>历史委托</el-menu-item>
+
         </el-menu>
         <el-link type="primary" @click="toUrl('newAddress')" class="user click fr tc" v-if="!accountAddress">登陆
         </el-link>
@@ -27,7 +28,7 @@
   export default {
     data() {
       return {
-        activeIndex: '1',//导航选中
+        activeIndex: 'switchHall',//导航选中
         accountInfo: {},//账户信息
         accountAddress: '',
       };

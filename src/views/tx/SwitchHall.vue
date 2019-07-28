@@ -19,7 +19,7 @@
                                     <el-input type="input" v-model="buyTokenOrderForm.price" :placeholder="$t('switch.nullPrice')"></el-input>
                                 </el-form-item>
                             </div>
-                            <div class="order_span"><span>USDT</span></div>
+                            <div class="order_span"><span>{{toTokenSymbol}}</span></div>
                         </el-row>
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
@@ -28,12 +28,12 @@
                                     <el-input type="input" v-model="buyTokenOrderForm.totalNum" :placeholder="$t('switch.nullTxNum')"></el-input>
                                 </el-form-item>
                             </div>
-                            <div class="order_span"><span>NULS</span></div>
+                            <div class="order_span"><span>{{fromTokenSymbol}}</span></div>
                         </el-row>
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.usable')}}：</span></div>
-                            <div class="order_label"><span>1000</span></div>
-                            <div class="order_label"><span>USDT</span></div>
+                            <div class="order_label"><span>100</span></div>
+                            <div class="order_label"><span>{{toTokenSymbol}}</span></div>
                         </el-row>
                         <el-row class="order_btn_row">
                             <el-button type="primary" @click="submitCreateOrder('buyTokenOrderForm',1)">{{$t('switch.buy')}}</el-button>
@@ -53,7 +53,7 @@
                                     <el-input type="input" v-model="sellTokenOrderForm.price" :placeholder="$t('switch.nullPrice')"></el-input>
                                 </el-form-item>
                             </div>
-                            <div class="order_span"><span>USDT</span></div>
+                            <div class="order_span"><span>{{toTokenSymbol}}</span></div>
                         </el-row>
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
@@ -62,12 +62,12 @@
                                     <el-input type="input" v-model="sellTokenOrderForm.totalNum" :placeholder="$t('switch.nullTxNum')"></el-input>
                                 </el-form-item>
                             </div>
-                            <div class="order_span"><span>NULS</span></div>
+                            <div class="order_span"><span>{{fromTokenSymbol}}</span></div>
                         </el-row>
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.usable')}}：</span></div>
                             <div class="order_label"><span>1000</span></div>
-                            <div class="order_label"><span>NULS</span></div>
+                            <div class="order_label"><span>{{fromTokenSymbol}}</span></div>
                         </el-row>
                         <el-row class="order_btn_row">
                             <el-button type="primary" @click="submitCreateOrder('sellTokenOrderForm',2)">{{$t('switch.sell')}}</el-button>
@@ -144,8 +144,8 @@
                         <el-table-column :label="$t('orderInfo.createTime')" width="170" align="left">
                             <template slot-scope="scope">{{ scope.row.createTime }}</template>
                         </el-table-column>
-                        <el-table-column :label="$t('orderInfo.txPair')" width="170" align="left">
-                            <template slot-scope="scope">{{ scope.row.txPair }}</template>
+                        <el-table-column :label="$t('orderInfo.tokenPair')" width="170" align="left">
+                            <template slot-scope="scope">{{ scope.row.tokenPair }}</template>
                         </el-table-column>
                         <el-table-column :label="$t('orderInfo.price')" width="170" align="left">
                             <template slot-scope="scope">{{ scope.row.price }}</template>
@@ -243,6 +243,10 @@
                 }
             };
             return {
+                fromTokenId: '',
+                toTokenId: '',
+                fromTokenSymbol: '',
+                toTokenSymbol: '',
                 balanceInfo: {},//账户余额信息
                 accountAddress: JSON.parse(localStorage.getItem('accountInfo')),
                 buyTokenOrderForm: {
@@ -265,9 +269,6 @@
                 txType: 0,
                 //地址
                 address: localStorage.getItem('accountInfo') != null ? JSON.parse(localStorage.getItem('accountInfo')).address : '',
-                //地址详情
-                addressInfo: [],
-                addressNumber: [],
                 //可买挂单列表
                 buyList: [],
                 //可买挂单列表分页信息
@@ -298,10 +299,6 @@
                 },
                 //当前委托列表加载动画
                 depositListLoading: true,
-                //隐藏共识奖励
-                hideSwitch: false,
-                fromTokenId: '',
-                toTokenId: '',
                 //地址定时器
                 addressInterval: null,
                 buyTokenOrderRules: {
@@ -614,10 +611,13 @@
             /**
              * 选择代币类型
              **/
-            changeTokenType(fromTokenId, toTokenId) {
+            changeTokenType(fromTokenId, toTokenId, fromTokenSymbol, toTokenSymbol) {
                 //this.$message(fromTokenId+"==="+toTokenId);
+                this.$message(fromTokenSymbol+"==="+toTokenSymbol);
                 this.fromTokenId = fromTokenId;
                 this.toTokenId = toTokenId;
+                this.fromTokenSymbol = fromTokenSymbol;
+                this.toTokenSymbol = toTokenSymbol;
             },
 
             /**
@@ -652,7 +652,6 @@
             address: function () {
                 // address，当放生变化时，重新获取数据
                 this.activeName = 'buyTab';
-                this.addressNumber = [];
                 //this.buyListLoading = true;
                 //this.getAddressInfo(this.address);
                 //this.pagesBuyList();

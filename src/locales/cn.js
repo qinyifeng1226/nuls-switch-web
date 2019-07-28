@@ -332,7 +332,7 @@ const cn ={
     "num":"数量",
     "usable":"可用",
     "createTime":"时间",
-    "txPair":"交易对",
+    "tokenPair":"交易对",
     "totalAmount":"总额",
     "status":"状态"
   },
