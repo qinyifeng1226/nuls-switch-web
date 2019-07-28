@@ -100,7 +100,7 @@
                                            :total="buyListPager.total"
                                            :current-page.sync="buyListPager.page"
                                            :pager-count=5
-                                           :page-size="buyListPager.rows" @current-change="pagesBuyListList">
+                                           :page-size="buyListPager.rows" @current-change="pagesBuyList">
                             </el-pagination>
                         </div>
                     </el-tab-pane>
@@ -125,7 +125,7 @@
                                            :total="sellListPager.total"
                                            :current-page.sync="sellListPager.page"
                                            :pager-count=5
-                                           :page-size="sellListPager.rows" @current-change="pagesSellListList">
+                                           :page-size="sellListPager.rows" @current-change="pagesSellList">
                             </el-pagination>
                         </div>
                     </el-tab-pane>
@@ -137,8 +137,8 @@
         <div class="bottoms w1200 cb">
             <el-tabs v-model="depositActiveName">
                 <el-tab-pane :label="$t('switch.currentDeposit')" name="depositTab">
-                    <el-table :data="buyList" stripe border style="width: 100%;" class="mt_0"
-                              v-loading="buyListLoading">
+                    <el-table :data="depositList" stripe border style="width: 100%;" class="mt_0"
+                              v-loading="depositListLoading">
                         <el-table-column label="" width="30">
                         </el-table-column>
                         <el-table-column :label="$t('orderInfo.createTime')" width="170" align="left">
@@ -166,7 +166,7 @@
                                        :total="depositListPager.total"
                                        :current-page.sync="depositListPager.page"
                                        :pager-count=5
-                                       :page-size="depositListPager.rows" @current-change="pagesDepositListList">
+                                       :page-size="depositListPager.rows" @current-change="pagesDepositList">
                         </el-pagination>
                     </div>
                 </el-tab-pane>
@@ -217,8 +217,12 @@
     export default {
         data() {
             let validatePrice = (rule, value, callback) => {
+                let re = /^\d+(?=\.{0,1}\d+$|$)/;
+                let res = /^\d{1,8}(\.\d{1,8})?$/;
                 if (!value) {
                     callback(new Error(this.$t('switch.nullPrice')));
+                } else if (!re.exec(value) || !res.exec(value)) {
+                    callback(new Error(this.$t('switch.mustNum')));
                 } else if (value <= 0) {
                     callback(new Error(this.$t('switch.mustNotZero')));
                 } else {
@@ -290,7 +294,7 @@
                 depositListPager: {
                     total: 0,
                     page: 1,
-                    rows: 2,
+                    rows: 3,
                 },
                 //当前委托列表加载动画
                 depositListLoading: true,
@@ -302,14 +306,19 @@
                 addressInterval: null,
                 buyTokenOrderRules: {
                     price: [
-                        {validator: validatePrice, trigger: ['blur', 'change']},
+                        {validator: validatePrice, trigger: ['blur']},
                     ],
                     totalNum: [
-                        {validator: validateTxNum, trigger: ['blur', 'change']}
+                        {validator: validateTxNum, trigger: ['blur']}
                     ]
                 },
                 sellTokenOrderRules:{
-
+                    price: [
+                        {validator: validatePrice, trigger: ['blur']},
+                    ],
+                    totalNum: [
+                        {validator: validateTxNum, trigger: ['blur']}
+                    ]
                 }
             }
         },
@@ -320,8 +329,8 @@
         created() {
             this.isMobile = /(iPhone|iOS|Android|Windows Phone)/i.test(navigator.userAgent);
             //this.getAddressInfo(this.address);
-            this.pagesBuyListList();
-            this.pagesDepositListList();
+            this.pagesBuyList();
+            this.pagesDepositList();
         },
         mounted() {
             //延迟加载饼状图
@@ -372,12 +381,18 @@
                         "address": newAddressInfo.address,
                         "fromTokenId": this.fromTokenId,
                         "toTokenId": this.toTokenId,
-                        "price": this.buyTokenOrderForm.price,
-                        "totalNum": this.buyTokenOrderForm.totalNum
+                        "price": this.txType == 1 ? this.buyTokenOrderForm.price : this.sellTokenOrderForm.price,
+                        "totalNum": this.txType == 1 ? this.buyTokenOrderForm.totalNum : this.sellTokenOrderForm.totalNum
                     };
                     await createOrder(params).then((response) => {
                         console.log(response);
                         if (response.success) {
+                            this.buyTokenOrderForm.price = '';
+                            this.buyTokenOrderForm.totalNum = '';
+                            this.sellTokenOrderForm.price = '';
+                            this.sellTokenOrderForm.totalNum = '';
+                            // 重新加载当前委托
+                            this.pagesDepositList();
                             this.$message({message: this.$t('switch.createOrderSuccess'), type: 'success', duration: 1000});
                         } else {
                             this.$message({message: this.$t('switch.createOrderError') + response.data, type: 'error', duration: 1000});
@@ -446,12 +461,12 @@
                 if (tab.name === 'buyTab') {
                     // 查询可买挂单列表
                     this.buyListLoading = true;
-                    this.pagesBuyListList();
+                    this.pagesBuyList();
                 } else if (tab.name === 'sellTab') {
                     console.log("this.address:  " + this.address);
                     // 查询可卖挂单列表
                     this.sellListLoading = true;
-                    this.pagesSellListList();
+                    this.pagesSellList();
                 }
             },
 
@@ -524,7 +539,7 @@
             /**
              * 根据地址获取可买挂单列表 分页
              */
-            pagesBuyListList() {
+            pagesBuyList() {
                 this.getBuyListByAddress(this.buyListPager.page, this.buyListPager.rows, this.address);
             },
 
@@ -564,7 +579,7 @@
             /**
              * 根据地址获取Token交易列表分页
              */
-            pagesSellListList() {
+            pagesSellList() {
                 this.getSellListByAddress(this.sellListPager.page, this.sellListPager.rows, this.address);
             },
 
@@ -584,7 +599,6 @@
                             this.depositList = response.result.records;
                             this.depositListPager.total = response.result.total;
                             this.depositListLoading = false;
-                            console.log("dep: " + response.result.total);
                         }
                     }).catch((error) => {
                     console.log(error)
@@ -594,15 +608,15 @@
             /**
              * 根据地址获取当前委托列表 分页
              */
-            pagesDepositListList() {
-                this.getDepositListByAddress(this.buyListPager.page, this.buyListPager.rows, this.address);
+            pagesDepositList() {
+                this.getDepositListByAddress(this.depositListPager.page, this.depositListPager.rows, this.address);
             },
 
             /**
              * 选择代币类型
              **/
             changeTokenType(fromTokenId, toTokenId) {
-                this.$message(fromTokenId+"==="+toTokenId);
+                //this.$message(fromTokenId+"==="+toTokenId);
                 this.fromTokenId = fromTokenId;
                 this.toTokenId = toTokenId;
             },
@@ -642,8 +656,8 @@
                 this.addressNumber = [];
                 //this.buyListLoading = true;
                 //this.getAddressInfo(this.address);
-                //this.pagesBuyListList();
-                //this.pagesDepositListList();
+                //this.pagesBuyList();
+                //this.pagesDepositList();
                 //延迟加载饼状图
                 setTimeout(() => {
 
@@ -752,7 +766,7 @@
                 }
 
                 .order_btn_row {
-                    padding-top: 20px;
+                    padding-top: 10px;
                     text-align: center
                 }
             }
