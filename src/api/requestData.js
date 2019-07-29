@@ -258,11 +258,71 @@ export async function getContractConstructor(contractCodeHex) {
 
 /**
  * 获取卖出挂单列表
- * @param agentHash
+ * @param order
  * @returns {Promise<any>}
  **/
 export async function listOnSell(params) {
-  return await get('/', '/v1/order/listOnSell', params)
+  return await get('/v1/order/', 'listOnSell', params)
+      .then((response) => {
+        return response.result;
+      })
+      .catch((error) => {
+        return {success: false, data: error};
+      });
+}
+
+/**
+ * 获取买入挂单列表
+ * @param order
+ * @returns {Promise<any>}
+ **/
+export async function listOnBuy(params) {
+  return await get('/v1/order/', 'listOnBuy', params)
+      .then((response) => {
+        return response.result;
+      })
+      .catch((error) => {
+        return {success: false, data: error};
+      });
+}
+
+/**
+ * 获取当前委托订单
+ * @param order
+ * @returns {Promise<any>}
+ **/
+export async function queryMyCurrentOrder(params) {
+  return await get('/v1/order/', 'queryMyCurrentOrder', params)
+      .then((response) => {
+        return response.result;
+      })
+      .catch((error) => {
+        return {success: false, data: error};
+      });
+}
+
+/**
+ * 获取历史委托订单
+ * @param order
+ * @returns {Promise<any>}
+ **/
+export async function queryMyHisOrder(params) {
+  return await get('/v1/order/', 'queryMyHisOrder', params)
+      .then((response) => {
+        return response.result;
+      })
+      .catch((error) => {
+        return {success: false, data: error};
+      });
+}
+
+/**
+ * 获取订单明细
+ * @param orderId
+ * @returns {Promise<any>}
+ **/
+export async function getOrderDetail(params) {
+  return await get('/v1/order/', 'getOrderDetail', params)
       .then((response) => {
         return response.result;
       })
@@ -293,6 +353,63 @@ export async function getToken(params) {
  **/
 export async function createOrder(params) {
   return await post('/v1/order/', 'createOrder', params)
+      .then((response) => {
+        if (response.hasOwnProperty("result")) {
+          return {success: true, data: response.result};
+        } else {
+          return {success: false, data: response.error};
+        }
+      })
+      .catch((error) => {
+        return {success: false, data: error};
+      });
+}
+
+/**
+ * 取消交易订单
+ * @param orderId
+ * @returns {Promise<any>}
+ **/
+export async function cancelOrder(params) {
+  return await post('/v1/order/', 'cancelOrder', params)
+      .then((response) => {
+        if (response.hasOwnProperty("result")) {
+          return {success: true, data: response.result};
+        } else {
+          return {success: false, data: response.error};
+        }
+      })
+      .catch((error) => {
+        return {success: false, data: error};
+      });
+}
+
+/**
+ * 用户吃单
+ * @param trade
+ * @returns {Promise<any>}
+ **/
+export async function tradingOrder(params) {
+  return await post('/v1/order/', 'tradingOrder', params)
+      .then((response) => {
+        if (response.hasOwnProperty("result")) {
+          return {success: true, data: response.result};
+        } else {
+          return {success: false, data: response.error};
+        }
+      })
+      .catch((error) => {
+        return {success: false, data: error};
+      });
+}
+
+/**
+ * 用户最终确认订单
+ * @param trade
+ * @returns {Promise<any>}
+ **/
+export async function confirmOrder(params) {
+  return await post('/v1/order/', 'confirmOrder', params)
       .then((response) => {
         if (response.hasOwnProperty("result")) {
           return {success: true, data: response.result};

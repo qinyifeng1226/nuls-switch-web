@@ -325,7 +325,9 @@ const cn ={
     "insufficientBalance": "对不起，余额不足",
     "txNumError": "交易数量不小于0",
     "createOrderSuccess": "挂单成功",
-    "createOrderError": "挂单失败"
+    "createOrderError": "挂单失败",
+    "tradingOrderSuccess": "交易成功",
+    "tradingOrderError": "交易失败"
   },
   "orderInfo":{
     "price":"价格",

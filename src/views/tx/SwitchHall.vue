@@ -172,36 +172,59 @@
                 </el-tab-pane>
             </el-tabs>
         </div>
+
+        <!-- 买入/卖出 -->
         <el-dialog title="买入" :visible.sync="buyTokenVisible" top="30vh" width="20rem"
                    class="password-dialog"
                    :close-on-click-modal="false"
                    :close-on-press-escape="false"
-                   @open="buyTokenFormShow"
                    @close="buyTokenFormClose">
 <!--            :rules="buyTokendRules" @submit.native.prevent-->
-            <el-form ref="buyTokenForm" :model="buyTokenForm" >
+            <el-form ref="buyTokenForm" :model="buyTokenForm">
                 <el-form-item prop="txNum">
                 </el-form-item>
-<!--                    <el-input v-model="buyTokenForm.txNum" type="input" :maxlength="22" ref="inpus"-->
-<!--                              @keyup.enter.native="enterSubmit('passwordForm')">-->
-<!--                    </el-input>-->
                 <div class="buyToken">
-                <el-row class="order_row">
-                    <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
-                    <div class="order_input">
-                        <el-input type="input" v-model="buyTokenForm.txNum" :maxlength="10"
-                                  placeholder="请输入数量"></el-input>
-                    </div>
-                </el-row>
+                    <el-row class="order_row">
+                        <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
+                        <div class="order_input">
+                            <el-input type="input" v-model="buyTokenForm.txNum" :maxlength="10" placeholder="请输入数量"></el-input>
+                        </div>
+                    </el-row>
                 </div>
             </el-form>
             <div slot="footer" class="dialog-footer1">
                 <el-button @click="buyTokenFormClose">取 消</el-button>
-                <el-button type="primary" @click="dialogSubmit('buyTokenForm')" id="buyTokenFormInfo">确 定
+                <el-button type="primary" @click="dialogSubmit('buyTokenForm')">确 定
+                </el-button>
+            </div>
+        </el-dialog>
+        <el-dialog title="卖出" :visible.sync="sellTokenVisible" top="30vh" width="20rem"
+                   class="password-dialog"
+                   :close-on-click-modal="false"
+                   :close-on-press-escape="false"
+                   @close="sellTokenFormClose">
+            <!--            :rules="buyTokendRules" @submit.native.prevent-->
+            <el-form ref="sellTokenForm" :model="sellTokenForm">
+                <el-form-item prop="txNum">
+                </el-form-item>
+                <div class="buyToken">
+                    <el-row class="order_row">
+                        <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
+                        <div class="order_input">
+                            <el-input type="input" v-model="sellTokenForm.txNum" :maxlength="10" placeholder="请输入数量"></el-input>
+                        </div>
+                    </el-row>
+                </div>
+            </el-form>
+            <div slot="footer" class="dialog-footer1">
+                <el-button @click="sellTokenFormClose">取 消</el-button>
+                <el-button type="primary" @click="dialogSubmit('sellTokenForm')">确 定
                 </el-button>
             </div>
         </el-dialog>
         <Password ref="password" @passwordSubmit="passSubmit">
+        </Password>
+        <Password ref="txpassword" @passwordSubmit="txpassSubmit">
         </Password>
     </div>
 </template>
@@ -210,9 +233,9 @@
     import nuls from 'nuls-sdk-js'
     import Password from '@/components/PasswordBar'
     import SelectTokenBar from '@/components/SelectTokenBar'
-    import {copys, chainID, timesDecimals, multiDecimals} from '@/api/util.js'
+    import {chainID, timesDecimals, multiDecimals} from '@/api/util.js'
+    import {createOrder,tradingOrder} from '@/api/requestData'
     //import moment from 'moment'
-    import {createOrder} from '@/api/requestData'
 
     export default {
         data() {
@@ -258,7 +281,10 @@
                     totalNum: '',
                 },
                 buyTokenForm: {
-                    txNum: '',
+                    txNum: ''
+                },
+                sellTokenForm: {
+                    txNum: ''
                 },
                 buyTokenVisible: false,
                 sellTokenVisible: false,
@@ -267,6 +293,8 @@
                 depositActiveName: 'depositTab',
                 //交易类型
                 txType: 0,
+                //交易数量
+                txNum: 0,
                 //地址
                 address: localStorage.getItem('accountInfo') != null ? JSON.parse(localStorage.getItem('accountInfo')).address : '',
                 //可买挂单列表
@@ -365,7 +393,7 @@
                 });
             },
             /**
-             *  获取密码框的密码
+             *  创建挂单，获取密码框的密码
              * @param password
              **/
             async passSubmit(password) {
@@ -403,14 +431,6 @@
                 }else {
                     this.$message({message: this.$t('public.errorPwd'), type: 'error', duration: 1000});
                 }
-            },
-            /**
-             * 复制方法
-             * @param sting
-             **/
-            copy(sting) {
-                copys(sting);
-                this.$message({message: this.$t('public.copysuccess'), type: 'success', duration: 1000});
             },
 
             /**
@@ -484,23 +504,67 @@
                 this.sellTokenVisible=true;
             },
 
-            //密码框显示执行事件
-            buyTokenFormShow() {
-            },
+            // 关闭买入窗口
             buyTokenFormClose() {
                 this.$refs['buyTokenForm'].resetFields();
                 this.buyTokenVisible = false;
             },
-            //弹出密码输入框
+            // 关闭卖出窗口
+            sellTokenFormClose() {
+                this.$refs['sellTokenForm'].resetFields();
+                this.sellTokenVisible = false;
+            },
+
+            // 点击确定买卖后，弹出密码输入框
             dialogSubmit(formName) {
                 this.$refs[formName].validate((valid) => {
                     if (valid) {
                         //this.$emit('passwordSubmit', this.passwordForm.password);
-                        this.buyTokenVisible = false;
+                        if(formName=='buyTokenForm')
+                        {
+                            this.txNum=this.buyTokenForm.txNum;
+                            this.buyTokenVisible = false;
+                        }
+                        if(formName=='sellTokenForm')
+                        {
+                            this.txNum=this.sellTokenForm.txNum;
+                            this.sellTokenVisible = false;
+                        }
+                        this.$refs.txpassword.showPassword(true);
                     } else {
                         return false
                     }
                 })
+            },
+            /**
+             *  确定买卖，获取密码框的密码
+             * @param password
+             **/
+            async txpassSubmit(password) {
+                const pri = nuls.decrypteOfAES(this.accountAddress.aesPri, password);
+                const newAddressInfo = nuls.importByKey(chainID(), pri, password);
+                if (newAddressInfo.address === this.accountAddress.address) {
+                    // 买卖TOKEN提交
+                    let params = {
+                        "address": newAddressInfo.address,
+                        "orderId": this.orderId,
+                        "txNum": multiDecimals(this.txNum, 8)
+                    };
+                    await tradingOrder(params).then((response) => {
+                        console.log(response);
+                        if (response.success) {
+                            this.buyTokenForm.txNum = '';
+                            this.sellTokenForm.txNum = '';
+                            this.$message({message: this.$t('switch.tradingOrderSuccess'), type: 'success', duration: 1000});
+                        } else {
+                            this.$message({message: this.$t('switch.tradingOrderError') + response.data, type: 'error', duration: 1000});
+                        }
+                    }).catch((err) => {
+                        this.$message({message: this.$t('switch.tradingOrderError') + err, type: 'error', duration: 1000});
+                    });
+                }else {
+                    this.$message({message: this.$t('public.errorPwd'), type: 'error', duration: 1000});
+                }
             },
 
             /**
