@@ -9,9 +9,9 @@ import {Plus, chainID} from './util'
  * @param signatrueCount 签名数量，默认为1
  **/
 export function countFee(tx, signatrueCount) {
-  let txSize = tx.txSerialize().length;
-  txSize += signatrueCount * 110;
-  return 100000 * Math.ceil(txSize / 1024);
+    let txSize = tx.txSerialize().length;
+    txSize += signatrueCount * 110;
+    return 100000 * Math.ceil(txSize / 1024);
 }
 
 /**
@@ -20,9 +20,9 @@ export function countFee(tx, signatrueCount) {
  * @param signatrueCount 签名数量，默认为1
  **/
 export function countCtxFee(tx, signatrueCount) {
-  let txSize = tx.txSerialize().length;
-  txSize += signatrueCount * 110;
-  return 1000000 * Math.ceil(txSize / 1024);
+    let txSize = tx.txSerialize().length;
+    txSize += signatrueCount * 110;
+    return 1000000 * Math.ceil(txSize / 1024);
 }
 
 /**
@@ -33,79 +33,79 @@ export function countCtxFee(tx, signatrueCount) {
  * @returns {*}
  **/
 export async function inputsOrOutputs(transferInfo, balanceInfo, type) {
-  let newAmount = Number(Plus(transferInfo.amount, transferInfo.fee));
-  let newLocked = 0;
-  let newNonce = balanceInfo.nonce;
-  let newoutputAmount = transferInfo.amount;
-  let newLockTime = 0;
-  if (balanceInfo.balance < newAmount) {
-    return {success: false, data: "Your balance is not enough."}
-  }
-  if (type === 4) {
-    newLockTime = -1;
-  } else if (type === 5) {
-    newLockTime = -1;
-  } else if (type === 6) {
-    newAmount = transferInfo.amount;
-    newLocked = -1;
-    newNonce = transferInfo.depositHash.substring(transferInfo.depositHash.length - 16);
-    newoutputAmount = transferInfo.amount - transferInfo.fee;
-  } else if (type === 9) {
-    newAmount = transferInfo.amount;
-    newLocked = -1;
-    newNonce = transferInfo.depositHash.substring(transferInfo.depositHash.length - 16);
-    newoutputAmount = transferInfo.amount - transferInfo.fee;
-    //锁定三天
-    newLockTime = (new Date()).valueOf() + 3600000 * 72;
-  } else {
-    //return {success: false, data: "No transaction type"}
-  }
-
-  let inputs = [{
-    address: transferInfo.fromAddress,
-    assetsChainId: transferInfo.assetsChainId,
-    assetsId: transferInfo.assetsId,
-    amount: newAmount,
-    locked: newLocked,
-    nonce: newNonce
-  }];
-
-  if (type === 2 && transferInfo.assetsChainId !== chainID()) {
-    inputs[0].amount = transferInfo.amount;
-    //账户转出资产余额
-    let nulsbalance = await getBalanceOrNonceByAddress(chainID(), transferInfo.assetsId, transferInfo.fromAddress);
-    if (nulsbalance.data.balance < 100000) {
-      console.log("余额小于手续费");
-      return
+    let newAmount = Number(Plus(transferInfo.amount, transferInfo.fee));
+    let newLocked = 0;
+    let newNonce = balanceInfo.nonce;
+    let newoutputAmount = transferInfo.amount;
+    let newLockTime = 0;
+    if (balanceInfo.balance < newAmount) {
+        return {success: false, data: "Your balance is not enough."}
     }
-    inputs.push({
-      address: transferInfo.fromAddress,
-      assetsChainId: chainID(),
-      assetsId: transferInfo.assetsId,
-      amount: 100000,
-      locked: newLocked,
-      nonce: nulsbalance.data.nonce
-    })
-  }
-  let outputs = [];
-  if (type === 15 || type === 17) {
-    return {success: true, data: {inputs: inputs, outputs: outputs}};
-  }
-  if (type === 16) {
-    if (!transferInfo.toAddress) {
-      return {success: true, data: {inputs: inputs, outputs: outputs}};
+    if (type === 4) {
+        newLockTime = -1;
+    } else if (type === 5) {
+        newLockTime = -1;
+    } else if (type === 6) {
+        newAmount = transferInfo.amount;
+        newLocked = -1;
+        newNonce = transferInfo.depositHash.substring(transferInfo.depositHash.length - 16);
+        newoutputAmount = transferInfo.amount - transferInfo.fee;
+    } else if (type === 9) {
+        newAmount = transferInfo.amount;
+        newLocked = -1;
+        newNonce = transferInfo.depositHash.substring(transferInfo.depositHash.length - 16);
+        newoutputAmount = transferInfo.amount - transferInfo.fee;
+        //锁定三天
+        newLockTime = (new Date()).valueOf() + 3600000 * 72;
     } else {
-      newoutputAmount = transferInfo.value;
+        //return {success: false, data: "No transaction type"}
     }
-  }
-  outputs = [{
-    address: transferInfo.toAddress ? transferInfo.toAddress : transferInfo.fromAddress,
-    assetsChainId: transferInfo.assetsChainId,
-    assetsId: transferInfo.assetsId,
-    amount: newoutputAmount,
-    lockTime: newLockTime
-  }];
-  return {success: true, data: {inputs: inputs, outputs: outputs}};
+
+    let inputs = [{
+        address: transferInfo.fromAddress,
+        assetsChainId: transferInfo.assetsChainId,
+        assetsId: transferInfo.assetsId,
+        amount: newAmount,
+        locked: newLocked,
+        nonce: newNonce
+    }];
+
+    if (type === 2 && transferInfo.assetsChainId !== chainID()) {
+        inputs[0].amount = transferInfo.amount;
+        //账户转出资产余额
+        let nulsbalance = await getBalanceOrNonceByAddress(chainID(), transferInfo.assetsId, transferInfo.fromAddress);
+        if (nulsbalance.data.balance < 100000) {
+            console.log("余额小于手续费");
+            return
+        }
+        inputs.push({
+            address: transferInfo.fromAddress,
+            assetsChainId: chainID(),
+            assetsId: transferInfo.assetsId,
+            amount: 100000,
+            locked: newLocked,
+            nonce: nulsbalance.data.nonce
+        })
+    }
+    let outputs = [];
+    if (type === 15 || type === 17) {
+        return {success: true, data: {inputs: inputs, outputs: outputs}};
+    }
+    if (type === 16) {
+        if (!transferInfo.toAddress) {
+            return {success: true, data: {inputs: inputs, outputs: outputs}};
+        } else {
+            newoutputAmount = transferInfo.value;
+        }
+    }
+    outputs = [{
+        address: transferInfo.toAddress ? transferInfo.toAddress : transferInfo.fromAddress,
+        assetsChainId: transferInfo.assetsChainId,
+        assetsId: transferInfo.assetsId,
+        amount: newoutputAmount,
+        lockTime: newLockTime
+    }];
+    return {success: true, data: {inputs: inputs, outputs: outputs}};
 }
 
 /**
@@ -114,18 +114,18 @@ export async function inputsOrOutputs(transferInfo, balanceInfo, type) {
  * @returns {Promise<any>}
  */
 export async function getAddressInfoByAddress(address) {
-  return await post_nuls('/', 'getAccount', [address])
-    .then((response) => {
-      //console.log(response);
-      if (response.hasOwnProperty("result")) {
-        return {success: true, data: response.result}
-      } else {
-        return {success: false, data: response}
-      }
-    })
-    .catch((error) => {
-      return {success: false, data: error};
-    });
+    return await post_nuls('/', 'getAccount', [address])
+        .then((response) => {
+            //console.log(response);
+            if (response.hasOwnProperty("result")) {
+                return {success: true, data: response.result}
+            } else {
+                return {success: false, data: response}
+            }
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 
 /**
@@ -136,18 +136,18 @@ export async function getAddressInfoByAddress(address) {
  * @returns {Promise<any>}
  */
 export async function getBalanceOrNonceByAddress(address, assetId = 1) {
-  return await post_nuls('/', 'getAccountBalance', [assetId, address])
-    .then((response) => {
-      console.log(response);
-      if (response.hasOwnProperty("result")) {
-        return {success: true, data: {balance: response.result.balance, nonce: response.result.nonce}}
-      } else {
-        return {success: false, data: response}
-      }
-    })
-    .catch((error) => {
-      return {success: false, data: error};
-    });
+    return await post_nuls('/', 'getAccountBalance', [assetId, address])
+        .then((response) => {
+            console.log(response);
+            if (response.hasOwnProperty("result")) {
+                return {success: true, data: {balance: response.result.balance, nonce: response.result.nonce}}
+            } else {
+                return {success: false, data: response}
+            }
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 
 /**
@@ -156,17 +156,17 @@ export async function getBalanceOrNonceByAddress(address, assetId = 1) {
  * @returns {Promise<any>}
  **/
 export async function validateTx(txHex) {
-  return await post_nuls('/', 'validateTx', [txHex])
-    .then((response) => {
-      if (response.hasOwnProperty("result")) {
-        return {success: true, data: response.result};
-      } else {
-        return {success: false, data: response.error};
-      }
-    })
-    .catch((error) => {
-      return {success: false, data: error};
-    });
+    return await post_nuls('/', 'validateTx', [txHex])
+        .then((response) => {
+            if (response.hasOwnProperty("result")) {
+                return {success: true, data: response.result};
+            } else {
+                return {success: false, data: response.error};
+            }
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 
 /**
@@ -175,17 +175,17 @@ export async function validateTx(txHex) {
  * @returns {Promise<any>}
  **/
 export async function broadcastTx(txHex) {
-  return await post_nuls('/', 'broadcastTx', [txHex])
-    .then((response) => {
-      if (response.hasOwnProperty("result")) {
-        return {success: true, data: response.result};
-      } else {
-        return {success: false, data: response.error};
-      }
-    })
-    .catch((error) => {
-      return {success: false, data: error};
-    });
+    return await post_nuls('/', 'broadcastTx', [txHex])
+        .then((response) => {
+            if (response.hasOwnProperty("result")) {
+                return {success: true, data: response.result};
+            } else {
+                return {success: false, data: response.error};
+            }
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 
 /**
@@ -194,29 +194,29 @@ export async function broadcastTx(txHex) {
  * @returns {Promise<any>}
  **/
 export async function validateAndBroadcast(txHex) {
-  return await post_nuls('/', 'validateTx', [txHex])
-    .then((response) => {
-      //console.log(response);
-      if (response.hasOwnProperty("result")) {
-        let newHash = response.result.value;
-        return post_nuls('/', 'broadcastTx', [txHex])
-          .then((response) => {
+    return await post_nuls('/', 'validateTx', [txHex])
+        .then((response) => {
+            //console.log(response);
             if (response.hasOwnProperty("result")) {
-              return {success: true, hash: newHash};
+                let newHash = response.result.value;
+                return post_nuls('/', 'broadcastTx', [txHex])
+                    .then((response) => {
+                        if (response.hasOwnProperty("result")) {
+                            return {success: true, hash: newHash};
+                        } else {
+                            return {success: false, data: response.error};
+                        }
+                    })
+                    .catch((error) => {
+                        return {success: false, data: error};
+                    });
             } else {
-              return {success: false, data: response.error};
+                return {success: false, data: response.error};
             }
-          })
-          .catch((error) => {
+        })
+        .catch((error) => {
             return {success: false, data: error};
-          });
-      } else {
-        return {success: false, data: response.error};
-      }
-    })
-    .catch((error) => {
-      return {success: false, data: error};
-    });
+        });
 }
 
 /**
@@ -225,14 +225,18 @@ export async function validateAndBroadcast(txHex) {
  * @returns {Promise<any>}
  **/
 export async function agentDeposistList(agentHash) {
-  //todo 这个接口是临时处理，后面要换一个接口，否则超过100个委托会出问题
-  return await post_nuls('/', 'getConsensusDeposit', [1, 100, agentHash])
-    .then((response) => {
-      return response.result;
-    })
-    .catch((error) => {
-      return {success: false, data: error};
-    });
+    //todo 这个接口是临时处理，后面要换一个接口，否则超过100个委托会出问题
+    return await post_nuls('/', 'getConsensusDeposit', [1, 100, agentHash])
+        .then((response) => {
+            if (response.hasOwnProperty("result")) {
+                return {success: true, data: response.result};
+            } else {
+                return {success: false, data: response.error};
+            }
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 
 /**
@@ -241,18 +245,18 @@ export async function agentDeposistList(agentHash) {
  * @returns {Promise<any>}
  */
 export async function getContractConstructor(contractCodeHex) {
-  return await post_nuls('/', 'getContractConstructor', [contractCodeHex])
-    .then((response) => {
-      //console.log(response);
-      if (response.hasOwnProperty("result")) {
-        return {success: true, data: response.result.constructor};
-      } else {
-        return {success: false, data: response.error};
-      }
-    })
-    .catch((error) => {
-      return {success: false, data: error};
-    });
+    return await post_nuls('/', 'getContractConstructor', [contractCodeHex])
+        .then((response) => {
+            //console.log(response);
+            if (response.hasOwnProperty("result")) {
+                return {success: true, data: response.result.constructor};
+            } else {
+                return {success: false, data: response.error};
+            }
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 
 
@@ -262,13 +266,17 @@ export async function getContractConstructor(contractCodeHex) {
  * @returns {Promise<any>}
  **/
 export async function listOnSell(params) {
-  return await get('/v1/order/', 'listOnSell', params)
-      .then((response) => {
-        return response.result;
-      })
-      .catch((error) => {
-        return {success: false, data: error};
-      });
+    return await get('/v1/order/', 'listOnSell', params)
+        .then((response) => {
+            if (response.hasOwnProperty("result")) {
+                return {success: true, data: response.result};
+            } else {
+                return {success: false, data: response.error};
+            }
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 
 /**
@@ -277,13 +285,17 @@ export async function listOnSell(params) {
  * @returns {Promise<any>}
  **/
 export async function listOnBuy(params) {
-  return await get('/v1/order/', 'listOnBuy', params)
-      .then((response) => {
-        return response.result;
-      })
-      .catch((error) => {
-        return {success: false, data: error};
-      });
+    return await get('/v1/order/', 'listOnBuy', params)
+        .then((response) => {
+            if (response.hasOwnProperty("result")) {
+                return {success: true, data: response.result};
+            } else {
+                return {success: false, data: response.error};
+            }
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 
 /**
@@ -292,13 +304,17 @@ export async function listOnBuy(params) {
  * @returns {Promise<any>}
  **/
 export async function queryMyCurrentOrder(params) {
-  return await get('/v1/order/', 'queryMyCurrentOrder', params)
-      .then((response) => {
-        return response.result;
-      })
-      .catch((error) => {
-        return {success: false, data: error};
-      });
+    return await get('/v1/order/', 'queryMyCurrentOrder', params)
+        .then((response) => {
+            if (response.hasOwnProperty("result")) {
+                return {success: true, data: response.result};
+            } else {
+                return {success: false, data: response.error};
+            }
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 
 /**
@@ -307,13 +323,17 @@ export async function queryMyCurrentOrder(params) {
  * @returns {Promise<any>}
  **/
 export async function queryMyHisOrder(params) {
-  return await get('/v1/order/', 'queryMyHisOrder', params)
-      .then((response) => {
-        return response.result;
-      })
-      .catch((error) => {
-        return {success: false, data: error};
-      });
+    return await get('/v1/order/', 'queryMyHisOrder', params)
+        .then((response) => {
+            if (response.hasOwnProperty("result")) {
+                return {success: true, data: response.result};
+            } else {
+                return {success: false, data: response.error};
+            }
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 
 /**
@@ -322,13 +342,17 @@ export async function queryMyHisOrder(params) {
  * @returns {Promise<any>}
  **/
 export async function getOrderDetail(params) {
-  return await get('/v1/order/', 'getOrderDetail', params)
-      .then((response) => {
-        return response.result;
-      })
-      .catch((error) => {
-        return {success: false, data: error};
-      });
+    return await get('/v1/order/', 'getOrderDetail', params)
+        .then((response) => {
+            if (response.hasOwnProperty("result")) {
+                return {success: true, data: response.result};
+            } else {
+                return {success: false, data: response.error};
+            }
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 
 /**
@@ -337,13 +361,13 @@ export async function getOrderDetail(params) {
  * @returns {Promise<any>}
  **/
 export async function getToken(params) {
-  return await post('/v1/auth', '/getToken', params)
-      .then((response) => {
-        return response.result;
-      })
-      .catch((error) => {
-        return {success: false, data: error};
-      });
+    return await post('/v1/auth', '/getToken', params)
+        .then((response) => {
+            return response.result;
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 
 /**
@@ -352,17 +376,17 @@ export async function getToken(params) {
  * @returns {Promise<any>}
  **/
 export async function createOrder(params) {
-  return await post('/v1/order/', 'createOrder', params)
-      .then((response) => {
-        if (response.hasOwnProperty("result")) {
-          return {success: true, data: response.result};
-        } else {
-          return {success: false, data: response.error};
-        }
-      })
-      .catch((error) => {
-        return {success: false, data: error};
-      });
+    return await post('/v1/order/', 'createOrder', params)
+        .then((response) => {
+            if (response.hasOwnProperty("result")) {
+                return {success: true, data: response.result};
+            } else {
+                return {success: false, data: response.error};
+            }
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 
 /**
@@ -371,17 +395,17 @@ export async function createOrder(params) {
  * @returns {Promise<any>}
  **/
 export async function cancelOrder(params) {
-  return await post('/v1/order/', 'cancelOrder', params)
-      .then((response) => {
-        if (response.hasOwnProperty("result")) {
-          return {success: true, data: response.result};
-        } else {
-          return {success: false, data: response.error};
-        }
-      })
-      .catch((error) => {
-        return {success: false, data: error};
-      });
+    return await post('/v1/order/', 'cancelOrder', params)
+        .then((response) => {
+            if (response.hasOwnProperty("result")) {
+                return {success: true, data: response.result};
+            } else {
+                return {success: false, data: response.error};
+            }
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 
 /**
@@ -390,17 +414,17 @@ export async function cancelOrder(params) {
  * @returns {Promise<any>}
  **/
 export async function tradingOrder(params) {
-  return await post('/v1/order/', 'tradingOrder', params)
-      .then((response) => {
-        if (response.hasOwnProperty("result")) {
-          return {success: true, data: response.result};
-        } else {
-          return {success: false, data: response.error};
-        }
-      })
-      .catch((error) => {
-        return {success: false, data: error};
-      });
+    return await post('/v1/order/', 'tradingOrder', params)
+        .then((response) => {
+            if (response.hasOwnProperty("result")) {
+                return {success: true, data: response.result};
+            } else {
+                return {success: false, data: response.error};
+            }
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 
 /**
@@ -409,16 +433,16 @@ export async function tradingOrder(params) {
  * @returns {Promise<any>}
  **/
 export async function confirmOrder(params) {
-  return await post('/v1/order/', 'confirmOrder', params)
-      .then((response) => {
-        if (response.hasOwnProperty("result")) {
-          return {success: true, data: response.result};
-        } else {
-          return {success: false, data: response.error};
-        }
-      })
-      .catch((error) => {
-        return {success: false, data: error};
-      });
+    return await post('/v1/order/', 'confirmOrder', params)
+        .then((response) => {
+            if (response.hasOwnProperty("result")) {
+                return {success: true, data: response.result};
+            } else {
+                return {success: false, data: response.error};
+            }
+        })
+        .catch((error) => {
+            return {success: false, data: error};
+        });
 }
 

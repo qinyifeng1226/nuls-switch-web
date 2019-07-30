@@ -1,5 +1,5 @@
 <template>
-    <div class="address-info bg-gray">
+    <div class="switch-hall bg-gray">
         <div class="bg-white">
             <div class="title font24 w1200">
                 <SelectTokenBar @change="changeTokenType"></SelectTokenBar>
@@ -137,21 +137,21 @@
         <div class="bottoms w1200 cb">
             <el-tabs v-model="depositActiveName">
                 <el-tab-pane :label="$t('switch.currentDeposit')" name="depositTab">
-                    <el-table :data="depositList" stripe border style="width: 100%;" class="mt_0"
+                    <el-table :data="depositList" stripe border class="mt_0 el-deposit-table"
                               v-loading="depositListLoading">
                         <el-table-column label="" width="30">
                         </el-table-column>
                         <el-table-column :label="$t('orderInfo.createTime')" width="170" align="left">
                             <template slot-scope="scope">{{ scope.row.createTime }}</template>
                         </el-table-column>
-                        <el-table-column :label="$t('orderInfo.tokenPair')" width="170" align="left">
-                            <template slot-scope="scope">{{ scope.row.tokenPair }}</template>
-                        </el-table-column>
-                        <el-table-column :label="$t('orderInfo.txType')" width="170" align="left">
+                        <el-table-column :label="$t('orderInfo.txType')" width="120" align="left">
                             <template slot-scope="scope">
                                 <span v-if="scope.row.txType ==1">{{$t('switch.buy')}}</span>
                                 <span v-else>{{$t('switch.sell')}}</span>
                             </template>
+                        </el-table-column>
+                        <el-table-column :label="$t('orderInfo.tokenPair')" width="170" align="left">
+                            <template slot-scope="scope">{{ scope.row.tokenPair }}</template>
                         </el-table-column>
                         <el-table-column :label="$t('orderInfo.price')" width="170" align="left">
                             <template slot-scope="scope">{{ scope.row.price }}</template>
@@ -162,11 +162,11 @@
                         <el-table-column :label="$t('orderInfo.totalAmount')" width="170" align="left">
                             <template slot-scope="scope">{{ scope.row.totalAmount }}</template>
                         </el-table-column>
-                        <el-table-column :label="$t('orderInfo.status')" width="170" align="left">
+                        <el-table-column :label="$t('orderInfo.status')" width="180" align="left">
                             <template slot-scope="scope">
                                 <el-button type="text" size="mini" @click="cancelOrderClick(scope.row.orderId)">取消</el-button>
                                 <span v-if="scope.row.status==1"> | </span>
-                                <el-button type="text" size="mini" @click="confirmOrderClick(scope.row.orderId)" v-if="scope.row.status==1">确认</el-button>
+                                <el-button type="text" size="mini" @click="getOrderTradeClick(scope.row.orderId)" v-if="scope.row.status==1">确认</el-button>
                             </template>
                         </el-table-column>
                     </el-table>
@@ -232,11 +232,58 @@
                 </el-button>
             </div>
         </el-dialog>
+
+        <!-- 订单交易详情列表 -->
+        <el-dialog title="订单交易详情" :visible.sync="orderTradeVisible" top="30vh"
+                   class="order-trade-dialog"
+                   :close-on-click-modal="false"
+                   :close-on-press-escape="false"
+                   @close="orderTradeFormClose">
+            <el-form ref="orderTradeForm">
+                <el-table :data="tradeList" stripe border class="mt_0 el-deposit-table"
+                          v-loading="tradeListLoading">
+                    <el-table-column label="" width="30">
+                    </el-table-column>
+                    <el-table-column :label="$t('orderInfo.createTime')" width="170" align="left">
+                        <template slot-scope="scope">{{ scope.row.createTime }}</template>
+                    </el-table-column>
+                    <el-table-column :label="$t('orderInfo.price')" width="150" align="left">
+                        <template slot-scope="scope">{{ scope.row.price }}</template>
+                    </el-table-column>
+                    <el-table-column :label="$t('orderInfo.num')" width="150" align="left">
+                        <template slot-scope="scope">{{ scope.row.txNum }}</template>
+                    </el-table-column>
+                    <el-table-column :label="$t('orderInfo.status')" width="150" align="left">
+                        <template slot-scope="scope">
+                            <span v-if="scope.row.status==1"> 确认中 </span>
+                            <el-button type="primary" size="mini" @click="confirmOrderClick(scope.row.txId)" v-if="scope.row.status==0 && scope.row.status!=9">确认</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <div class="paging">
+                    <el-pagination class="pages" background layout="total,prev, pager, next, jumper"
+                                   v-show="tradeListPager.total > tradeListPager.rows"
+                                   :total="tradeListPager.total"
+                                   :current-page.sync="tradeListPager.page"
+                                   :pager-count=5
+                                   :page-size="tradeListPager.rows" @current-change="pagesTradeList">
+                    </el-pagination>
+                </div>
+            </el-form>
+        </el-dialog>
+
+        <!-- 用于在不同功能输入密码 -->
+        <!-- 买入/卖出挂单 -->
         <Password ref="createOrderPassword" @passwordSubmit="createOrderPassSubmit">
         </Password>
+        <!-- 买入/卖出交易 -->
         <Password ref="txOrderPassword" @passwordSubmit="txOrderPassSubmit">
         </Password>
+        <!-- 取消挂单 -->
         <Password ref="cancelOrderPassword" @passwordSubmit="cancelOrderPassSubmit">
+        </Password>
+        <!-- 确认交易 -->
+        <Password ref="confirmOrderPassword" @passwordSubmit="confirmOrderPassSubmit">
         </Password>
     </div>
 </template>
@@ -246,7 +293,7 @@
     import Password from '@/components/PasswordBar'
     import SelectTokenBar from '@/components/SelectTokenBar'
     import {chainID, timesDecimals, multiDecimals} from '@/api/util.js'
-    import {createOrder,tradingOrder,cancelOrder} from '@/api/requestData'
+    import {createOrder,tradingOrder,cancelOrder,confirmOrder,getOrderDetail} from '@/api/requestData'
     //import moment from 'moment'
 
     export default {
@@ -300,6 +347,7 @@
                 },
                 buyTokenVisible: false,
                 sellTokenVisible: false,
+                orderTradeVisible: false,
                 isMobile: true,
                 activeName: 'buyTab',
                 depositActiveName: 'depositTab',
@@ -309,6 +357,8 @@
                 txNum: 0,
                 //订单ID
                 orderId: '',
+                //订单交易ID
+                txId: '',
                 //地址
                 address: localStorage.getItem('accountInfo') != null ? JSON.parse(localStorage.getItem('accountInfo')).address : '',
                 //可买挂单列表
@@ -337,10 +387,21 @@
                 depositListPager: {
                     total: 0,
                     page: 1,
-                    rows: 3,
+                    rows: 5,
                 },
                 //当前委托列表加载动画
                 depositListLoading: true,
+
+                //订单交易列表
+                tradeList: [],
+                //订单交易列表分页信息
+                tradeListPager: {
+                    total: 0,
+                    page: 1,
+                    rows: 5,
+                },
+                //订单交易列表加载动画
+                tradeListLoading: true,
                 //地址定时器
                 addressInterval: null,
                 buyTokenOrderRules: {
@@ -591,7 +652,7 @@
                 this.$refs.cancelOrderPassword.showPassword(true);
             },
             /**
-             *  取消订单，获取密码框的密码
+             *  取消订单提交
              * @param password
              **/
             async cancelOrderPassSubmit(password) {
@@ -617,14 +678,90 @@
                     this.$message({message: this.$t('public.errorPwd'), type: 'error', duration: 1000});
                 }
             },
+
             /**
-             *  确认订单，查询订单交易记录列表
+             *  关闭订单交易明细窗口
+             **/
+            orderTradeFormClose() {
+                this.$refs['orderTradeForm'].resetFields();
+                this.orderTradeVisible = false;
+            },
+            /**
+             *  查询订单交易记录列表
              * @param orderId
              **/
-            confirmOrderClick(orderId) {
+            async getOrderTradeClick(orderId) {
                 this.orderId = orderId;
+                // let params = {
+                //     "orderId": this.orderId
+                // };
                 // 查询订单交易记录
+                this.pagesTradeList(orderId);
+            },
+            /**
+             * 订单交易列表 分页
+             */
+            async pagesTradeList(orderId){
+                let params = {"current":  this.tradeListPager.page, "pageSize": this.tradeListPager.rows, "orderId": orderId};
+                await getOrderDetail(params).then((response) => {
+                    console.log(response);
+                    if (response.success) {
+                        // 展示订单交易详情
+                        for (let item of response.data.records) {
+                            //item.price = timesDecimals(item.price, 8);
+                            item.txNum = timesDecimals(item.txNum, 8);
+                            item.totalNum = timesDecimals(item.totalNum, 8);
+                        }
+                        this.tradeList = response.data.records;
+                        this.tradeListPager.total = response.data.total;
+                        this.tradeListLoading = false;
+                        this.orderTradeVisible = true;
+                        //this.$message({message: this.$t('switch.getOrderTradeSuccess'), type: 'success', duration: 1000});
+                    } else {
+                        this.$message({message: this.$t('switch.getOrderTradeError') + response.data, type: 'error', duration: 1000});
+                    }
+                }).catch((err) => {
+                    this.$message({message: this.$t('switch.getOrderTradeError') + err, type: 'error', duration: 1000});
+                });
+            },
 
+            /**
+             *  确认订单，获取密码框的密码
+             * @param orderId
+             **/
+            confirmOrderClick(txId) {
+                this.txId = txId;
+                this.$refs.confirmOrderPassword.showPassword(true);
+            },
+            /**
+             *  确认订单提交，该操作数据会上链
+             * @param password
+             **/
+            async confirmOrderPassSubmit(password) {
+                const pri = nuls.decrypteOfAES(this.accountAddress.aesPri, password);
+                const newAddressInfo = nuls.importByKey(chainID(), pri, password);
+                if (newAddressInfo.address === this.accountAddress.address) {
+                    // 组装交易数据上链 TODO
+                    let txHash='123';
+                    // 确认订单提交
+                    let params = {
+                        "txId": this.txId,
+                        "txHash": txHash
+                    };
+                    await confirmOrder(params).then((response) => {
+                        console.log(response);
+                        if (response.success) {
+                            this.orderId = '';
+                            this.$message({message: this.$t('switch.confirmOrderSuccess'), type: 'success', duration: 1000});
+                        } else {
+                            this.$message({message: this.$t('switch.confirmOrderError') + response.data, type: 'error', duration: 1000});
+                        }
+                    }).catch((err) => {
+                        this.$message({message: this.$t('switch.confirmOrderError') + err, type: 'error', duration: 1000});
+                    });
+                }else {
+                    this.$message({message: this.$t('public.errorPwd'), type: 'error', duration: 1000});
+                }
             },
 
             /**
@@ -640,11 +777,11 @@
                 };
                 this.$get('/v1/order/listOnSell', '', params)
                     .then((response) => {
-                        //console.log(response);
                         if (response.hasOwnProperty("result")) {
                             for (let item of response.result.records) {
                                 //item.createTime = moment(getLocalTime(item.createTime)).format('YYYY-MM-DD HH:mm:ss');
                                 item.price = timesDecimals(item.price, 8);
+                                item.txNum = timesDecimals(item.txNum, 8);
                                 item.totalNum = timesDecimals(item.totalNum, 8);
                             }
                             this.buyList = response.result.records;
@@ -724,7 +861,6 @@
                     console.log(error)
                 })
             },
-
             /**
              * 根据地址获取当前委托列表 分页
              */
@@ -737,7 +873,7 @@
              **/
             changeTokenType(fromTokenId, toTokenId, fromTokenSymbol, toTokenSymbol) {
                 //this.$message(fromTokenId+"==="+toTokenId);
-                this.$message(fromTokenSymbol+"==="+toTokenSymbol);
+                //this.$message(fromTokenSymbol+"==="+toTokenSymbol);
                 this.fromTokenId = fromTokenId;
                 this.toTokenId = toTokenId;
                 this.fromTokenSymbol = fromTokenSymbol;
@@ -754,12 +890,6 @@
                 if (name === 'addressInfo') {
                     this.address = parmes;
                     newParmes = {address: parmes}
-                } else if (name === 'blockInfo') {
-                    newParmes = {height: parmes}
-                } else if (name === 'contractsInfo') {
-                    newParmes = {contractAddress: parmes, tabName: 'first'}
-                } else if (name === 'tokenInfo') {
-                    newParmes = {contractAddress: parmes}
                 } else {
                     newParmes = {hash: parmes}
                 }
@@ -767,7 +897,6 @@
                     name: name,
                     query: newParmes
                 })
-
             },
 
         },
@@ -797,7 +926,7 @@
         margin: 0 01px;
     }
 
-    .address-info {
+    .switch-hall {
         //min-height: 800px;
         margin-bottom: 10px;
 
@@ -972,21 +1101,47 @@
         }
 
         .bottoms {
-            margin: 0px auto 14px;
+            margin: 0px auto 40px;
             @media screen and (max-width: 1000px) {
                 margin: 1.5rem auto 1.5rem ;
                 width: 95%;
             }
 
-            .el-icon-download {
-                margin-left: 10px;
-                font-size: 20px;
+            .el-deposit-table {
+                margin-bottom: 15px;
             }
 
-            .hide-switch {
-                margin: 10px 0 0 0;
-                @media screen and (max-width: 1000px) {
-                    margin: 0.5rem 0.5rem 0 0;
+        }
+    }
+
+    .order-trade-dialog {
+        .el-dialog {
+            width: 700px;
+            .el-dialog__body {
+                background-color: #F5F6F9 !important;
+                padding: 30px 20px 30px 20px !important;
+                .el-form {
+                    .el-form-item {
+                        .el-form-item__label {
+                            line-height: 0;
+                            padding: 28px 0 20px 0;
+                        }
+                    }
+                }
+            }
+            .el-dialog__footer {
+                text-align: center;
+                background-color: #F5F6F9 !important;
+                .dialog-footer {
+                    padding: 1rem 1rem 0.1rem;
+                    .el-button {
+                        width: 9.5rem;
+                    }
+                    .el-button--success {
+                        span {
+                            color: white;
+                        }
+                    }
                 }
             }
         }
