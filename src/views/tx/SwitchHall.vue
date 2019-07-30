@@ -91,7 +91,7 @@
                                 <template slot-scope="scope">{{ scope.row.totalNum }}</template>
                             </el-table-column>
                             <el-table-column :label="$t('switch.buy')" width="120" align="left">
-                                <template><el-button type="primary" @click="buyBtnClick">{{$t('switch.buy')}}</el-button></template>
+                                <template slot-scope="scope"><el-button type="primary" @click="buyBtnClick(scope.row.orderId)">{{$t('switch.buy')}}</el-button></template>
                             </el-table-column>
                         </el-table>
                         <div class="paging">
@@ -116,7 +116,7 @@
                                 <template slot-scope="scope">{{ scope.row.totalNum }}</template>
                             </el-table-column>
                             <el-table-column :label="$t('switch.sell')" width="120" align="left">
-                                <template><el-button type="primary" @click="sellBtnClick">{{$t('switch.sell')}}</el-button></template>
+                                <template slot-scope="scope"><el-button type="primary" @click="sellBtnClick(scope.row.orderId)">{{$t('switch.sell')}}</el-button></template>
                             </el-table-column>
                         </el-table>
                         <div class="paging">
@@ -147,6 +147,12 @@
                         <el-table-column :label="$t('orderInfo.tokenPair')" width="170" align="left">
                             <template slot-scope="scope">{{ scope.row.tokenPair }}</template>
                         </el-table-column>
+                        <el-table-column :label="$t('orderInfo.txType')" width="170" align="left">
+                            <template slot-scope="scope">
+                                <span v-if="scope.row.txType ==1">{{$t('switch.buy')}}</span>
+                                <span v-else>{{$t('switch.sell')}}</span>
+                            </template>
+                        </el-table-column>
                         <el-table-column :label="$t('orderInfo.price')" width="170" align="left">
                             <template slot-scope="scope">{{ scope.row.price }}</template>
                         </el-table-column>
@@ -157,7 +163,11 @@
                             <template slot-scope="scope">{{ scope.row.totalAmount }}</template>
                         </el-table-column>
                         <el-table-column :label="$t('orderInfo.status')" width="170" align="left">
-                            <template slot-scope="scope">{{ scope.row.status }}</template>
+                            <template slot-scope="scope">
+                                <el-button type="text" size="mini" @click="cancelOrderClick(scope.row.orderId)">取消</el-button>
+                                <span v-if="scope.row.status==1"> | </span>
+                                <el-button type="text" size="mini" @click="confirmOrderClick(scope.row.orderId)" v-if="scope.row.status==1">确认</el-button>
+                            </template>
                         </el-table-column>
                     </el-table>
                     <div class="paging">
@@ -194,7 +204,7 @@
             </el-form>
             <div slot="footer" class="dialog-footer1">
                 <el-button @click="buyTokenFormClose">取 消</el-button>
-                <el-button type="primary" @click="dialogSubmit('buyTokenForm')">确 定
+                <el-button type="primary" @click="txOrderSubmit('buyTokenForm')">确 定
                 </el-button>
             </div>
         </el-dialog>
@@ -218,13 +228,15 @@
             </el-form>
             <div slot="footer" class="dialog-footer1">
                 <el-button @click="sellTokenFormClose">取 消</el-button>
-                <el-button type="primary" @click="dialogSubmit('sellTokenForm')">确 定
+                <el-button type="primary" @click="txOrderSubmit('sellTokenForm')">确 定
                 </el-button>
             </div>
         </el-dialog>
-        <Password ref="password" @passwordSubmit="passSubmit">
+        <Password ref="createOrderPassword" @passwordSubmit="createOrderPassSubmit">
         </Password>
-        <Password ref="txpassword" @passwordSubmit="txpassSubmit">
+        <Password ref="txOrderPassword" @passwordSubmit="txOrderPassSubmit">
+        </Password>
+        <Password ref="cancelOrderPassword" @passwordSubmit="cancelOrderPassSubmit">
         </Password>
     </div>
 </template>
@@ -234,7 +246,7 @@
     import Password from '@/components/PasswordBar'
     import SelectTokenBar from '@/components/SelectTokenBar'
     import {chainID, timesDecimals, multiDecimals} from '@/api/util.js'
-    import {createOrder,tradingOrder} from '@/api/requestData'
+    import {createOrder,tradingOrder,cancelOrder} from '@/api/requestData'
     //import moment from 'moment'
 
     export default {
@@ -295,6 +307,8 @@
                 txType: 0,
                 //交易数量
                 txNum: 0,
+                //订单ID
+                orderId: '',
                 //地址
                 address: localStorage.getItem('accountInfo') != null ? JSON.parse(localStorage.getItem('accountInfo')).address : '',
                 //可买挂单列表
@@ -386,7 +400,7 @@
                 this.$refs[formName].validate((valid) => {
                     if (valid) {
                         this.txType=txType;
-                        this.$refs.password.showPassword(true);
+                        this.$refs.createOrderPassword.showPassword(true);
                     } else {
                         return false;
                     }
@@ -396,7 +410,7 @@
              *  创建挂单，获取密码框的密码
              * @param password
              **/
-            async passSubmit(password) {
+            async createOrderPassSubmit(password) {
                 const pri = nuls.decrypteOfAES(this.accountAddress.aesPri, password);
                 const newAddressInfo = nuls.importByKey(chainID(), pri, password);
                 let price=this.txType == 1 ? this.buyTokenOrderForm.price : this.sellTokenOrderForm.price;
@@ -493,15 +507,17 @@
             /**
              * 点击买入按钮，弹出购买框
              */
-            buyBtnClick(){
-                this.buyTokenVisible=true;
+            buyBtnClick(orderId){
+                this.orderId = orderId;
+                this.buyTokenVisible = true;
             },
 
             /**
              * 点击买出按钮，弹出卖出框
              */
-            sellBtnClick(){
-                this.sellTokenVisible=true;
+            sellBtnClick(orderId) {
+                this.orderId = orderId;
+                this.sellTokenVisible = true;
             },
 
             // 关闭买入窗口
@@ -516,10 +532,9 @@
             },
 
             // 点击确定买卖后，弹出密码输入框
-            dialogSubmit(formName) {
+            txOrderSubmit(formName) {
                 this.$refs[formName].validate((valid) => {
                     if (valid) {
-                        //this.$emit('passwordSubmit', this.passwordForm.password);
                         if(formName=='buyTokenForm')
                         {
                             this.txNum=this.buyTokenForm.txNum;
@@ -530,7 +545,7 @@
                             this.txNum=this.sellTokenForm.txNum;
                             this.sellTokenVisible = false;
                         }
-                        this.$refs.txpassword.showPassword(true);
+                        this.$refs.txOrderPassword.showPassword(true);
                     } else {
                         return false
                     }
@@ -540,7 +555,7 @@
              *  确定买卖，获取密码框的密码
              * @param password
              **/
-            async txpassSubmit(password) {
+            async txOrderPassSubmit(password) {
                 const pri = nuls.decrypteOfAES(this.accountAddress.aesPri, password);
                 const newAddressInfo = nuls.importByKey(chainID(), pri, password);
                 if (newAddressInfo.address === this.accountAddress.address) {
@@ -565,6 +580,51 @@
                 }else {
                     this.$message({message: this.$t('public.errorPwd'), type: 'error', duration: 1000});
                 }
+            },
+
+            /**
+             *  取消订单，获取密码框的密码
+             * @param orderId
+             **/
+            cancelOrderClick(orderId) {
+                this.orderId = orderId;
+                this.$refs.cancelOrderPassword.showPassword(true);
+            },
+            /**
+             *  取消订单，获取密码框的密码
+             * @param password
+             **/
+            async cancelOrderPassSubmit(password) {
+                const pri = nuls.decrypteOfAES(this.accountAddress.aesPri, password);
+                const newAddressInfo = nuls.importByKey(chainID(), pri, password);
+                if (newAddressInfo.address === this.accountAddress.address) {
+                    // 取消订单提交
+                    let params = {
+                        "orderId": this.orderId
+                    };
+                    await cancelOrder(params).then((response) => {
+                        console.log(response);
+                        if (response.success) {
+                            this.orderId = '';
+                            this.$message({message: this.$t('switch.cancelOrderSuccess'), type: 'success', duration: 1000});
+                        } else {
+                            this.$message({message: this.$t('switch.cancelOrderError') + response.data, type: 'error', duration: 1000});
+                        }
+                    }).catch((err) => {
+                        this.$message({message: this.$t('switch.cancelOrderError') + err, type: 'error', duration: 1000});
+                    });
+                }else {
+                    this.$message({message: this.$t('public.errorPwd'), type: 'error', duration: 1000});
+                }
+            },
+            /**
+             *  确认订单，查询订单交易记录列表
+             * @param orderId
+             **/
+            confirmOrderClick(orderId) {
+                this.orderId = orderId;
+                // 查询订单交易记录
+
             },
 
             /**

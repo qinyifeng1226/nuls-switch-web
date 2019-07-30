@@ -327,12 +327,15 @@ const cn ={
     "createOrderSuccess": "挂单成功",
     "createOrderError": "挂单失败",
     "tradingOrderSuccess": "交易成功",
-    "tradingOrderError": "交易失败"
+    "tradingOrderError": "交易失败",
+    "cancelOrderSuccess": "取消挂单成功",
+    "cancelOrderError": "取消挂单失败"
   },
   "orderInfo":{
     "price":"价格",
     "num":"数量",
     "usable":"可用",
+    "txType":"交易类型",
     "createTime":"时间",
     "tokenPair":"交易对",
     "totalAmount":"总额",
