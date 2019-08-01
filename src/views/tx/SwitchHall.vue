@@ -91,7 +91,7 @@
                                 <template slot-scope="scope">{{ scope.row.totalNum }}</template>
                             </el-table-column>
                             <el-table-column :label="$t('switch.buy')" width="120" align="left">
-                                <template slot-scope="scope"><el-button type="primary" @click="buyBtnClick(scope.row.orderId)">{{$t('switch.buy')}}</el-button></template>
+                                <template slot-scope="scope"><el-button type="primary" @click="buyBtnClick(scope.row.orderId,scope.row.price)">{{$t('switch.buy')}}</el-button></template>
                             </el-table-column>
                         </el-table>
                         <div class="paging">
@@ -116,7 +116,7 @@
                                 <template slot-scope="scope">{{ scope.row.totalNum }}</template>
                             </el-table-column>
                             <el-table-column :label="$t('switch.sell')" width="120" align="left">
-                                <template slot-scope="scope"><el-button type="primary" @click="sellBtnClick(scope.row.orderId)">{{$t('switch.sell')}}</el-button></template>
+                                <template slot-scope="scope"><el-button type="primary" @click="sellBtnClick(scope.row.orderId,scope.row.price)">{{$t('switch.sell')}}</el-button></template>
                             </el-table-column>
                         </el-table>
                         <div class="paging">
@@ -292,7 +292,7 @@
     import nuls from 'nuls-sdk-js'
     import Password from '@/components/PasswordBar'
     import SelectTokenBar from '@/components/SelectTokenBar'
-    import {chainID, timesDecimals, multiDecimals} from '@/api/util.js'
+    import {chainID, timesDecimals, multiDecimals, Times} from '@/api/util.js'
     import {createOrder,tradingOrder,cancelOrder,confirmOrder,getOrderDetail} from '@/api/requestData'
     //import moment from 'moment'
 
@@ -334,10 +334,12 @@
                 buyTokenOrderForm: {
                     price: '',
                     totalNum: '',
+                    totalAmount: ''
                 },
                 sellTokenOrderForm: {
                     price: '',
                     totalNum: '',
+                    totalAmount: ''
                 },
                 buyTokenForm: {
                     txNum: ''
@@ -357,6 +359,7 @@
                 txNum: 0,
                 //订单ID
                 orderId: '',
+                price: '',
                 //订单交易ID
                 txId: '',
                 //地址
@@ -485,15 +488,18 @@
                         "fromTokenId": this.fromTokenId,
                         "toTokenId": this.toTokenId,
                         "price": multiDecimals(price, 8),
-                        "totalNum": multiDecimals(totalNum, 8)
+                        "totalNum": multiDecimals(totalNum, 8),
+                        "totalAmount": multiDecimals(Number(Times(price, totalNum)), 8)
                     };
                     await createOrder(params).then((response) => {
                         console.log(response);
                         if (response.success) {
                             this.buyTokenOrderForm.price = '';
                             this.buyTokenOrderForm.totalNum = '';
+                            this.buyTokenOrderForm.totalAmount = '';
                             this.sellTokenOrderForm.price = '';
                             this.sellTokenOrderForm.totalNum = '';
+                            this.sellTokenOrderForm.totalAmount = '';
                             // 重新加载当前委托
                             this.pagesDepositList();
                             this.$message({message: this.$t('switch.createOrderSuccess'), type: 'success', duration: 1000});
@@ -568,16 +574,18 @@
             /**
              * 点击买入按钮，弹出购买框
              */
-            buyBtnClick(orderId){
+            buyBtnClick(orderId, price) {
                 this.orderId = orderId;
+                this.price = price;
                 this.buyTokenVisible = true;
             },
 
             /**
              * 点击买出按钮，弹出卖出框
              */
-            sellBtnClick(orderId) {
+            sellBtnClick(orderId, price) {
                 this.orderId = orderId;
+                this.price = price;
                 this.sellTokenVisible = true;
             },
 
@@ -624,7 +632,8 @@
                     let params = {
                         "address": newAddressInfo.address,
                         "orderId": this.orderId,
-                        "txNum": multiDecimals(this.txNum, 8)
+                        "txNum": multiDecimals(this.txNum, 8),
+                        "toNum": multiDecimals(Number(Times(this.price, this.txNum)), 8)
                     };
                     await tradingOrder(params).then((response) => {
                         console.log(response);
@@ -903,7 +912,6 @@
 
         watch: {
             address: function () {
-                // address，当放生变化时，重新获取数据
                 this.activeName = 'buyTab';
                 //this.buyListLoading = true;
                 //this.getAddressInfo(this.address);
