@@ -290,9 +290,11 @@
 
 <script>
     import nuls from 'nuls-sdk-js'
+    import sdk from 'nuls-sdk-js/lib/api/sdk'
+    import utils from 'nuls-sdk-js/lib/utils/utils'
     import Password from '@/components/PasswordBar'
     import SelectTokenBar from '@/components/SelectTokenBar'
-    import {chainID, timesDecimals, multiDecimals, Times} from '@/api/util.js'
+    import {chainID, timesDecimals, multiDecimals, Times, addressInfo} from '@/api/util.js'
     import {createOrder,tradingOrder,cancelOrder,confirmOrder,getOrderDetail} from '@/api/requestData'
     //import moment from 'moment'
 
@@ -324,13 +326,83 @@
                     callback();
                 }
             };
+            let validateToAddress = (rule, value, callback) => {
+                let patrn = /^(?![a-zA-Z]+$)(?![^\da-zA-Z]+$).{20,50}$/;
+                if (value === '') {
+                    callback(new Error(this.$t('transfer.transfer9')))
+                } else if (!patrn.exec(value)) {
+                    callback(new Error(this.$t('transfer.transfer10')))
+                } else {
+                    callback()
+                }
+            };
+            let validateAmount = (rule, value, callback) => {
+                let patrn = /^([1-9][\d]{0,72}|0)(\.[\d]{1,72})?$/;
+                if (value === '') {
+                    callback(new Error(this.$t('transfer.transfer11')))
+                } else if (!patrn.exec(value)) {
+                    callback(new Error(this.$t('transfer.transfer12')))
+                } else if (parseFloat(value) < 0.001) {
+                    callback(new Error(this.$t('transfer.transfer13')))
+                } else {
+                    setTimeout(() => {
+                        if (Number(value) > Number(this.changeAssets.balance)) {
+                            callback(new Error(this.$t('transfer.transfer14')))
+                        } else {
+                            callback()
+                        }
+                    }, 200);
+                    //callback();
+                }
+            };
+            let validateGas = (rule, value, callback) => {
+                if (!value) {
+                    callback(new Error(this.$t('deploy.deploy8')));
+                } else if (value < 1 || value > 10000000) {
+                    callback(new Error(this.$t('deploy.deploy81')));
+                } else {
+                    callback();
+                }
+            };
+            let validateTxPrice = (rule, value, callback) => {
+                if (!value) {
+                    callback(new Error(this.$t('deploy.deploy9')));
+                } else if (value < 1) {
+                    callback(new Error(this.$t('deploy.deploy91')));
+                } else {
+                    callback();
+                }
+            };
             return {
                 fromTokenId: '',
                 toTokenId: '',
                 fromTokenSymbol: '',
                 toTokenSymbol: '',
+                addressInfo: '', //默认账户信息
                 balanceInfo: {},//账户余额信息
                 accountAddress: JSON.parse(localStorage.getItem('accountInfo')),
+                assetsList: [],//账户资产列表
+                changeAssets: {},//选择的资产信息
+                gasNumber: 0,//消耗的gas
+                oldGasNumber: 0,//默认的gas
+                transferForm: {
+                    fromAddress: '',
+                    toAddress: '',
+                    type: this.$route.query.accountType ? this.$route.query.accountType : 'NULS',
+                    amount: '',
+                    senior: false,
+                    gas: this.gasNumber,
+                    price: sdk.CONTRACT_MINIMUM_PRICE,
+                    remarks: '',
+                },//转账数据
+                transferRules: {
+                    toAddress: [{validator: validateToAddress, trigger: ['blur', 'change']}],
+                    amount: [{validator: validateAmount, trigger: ['blur', 'change']}],
+                    //gas: [{validator: validateGas, trigger: ['blur', 'change']}],
+                    price: [{validator: validatePrice, trigger: 'blur'}],
+                }, //验证信息
+                fee: 0.001, //手续费
+                feeSymbol: "NULS",//手续费显示单位
                 buyTokenOrderForm: {
                     price: '',
                     totalNum: '',
@@ -431,9 +503,14 @@
         },
         created() {
             this.isMobile = /(iPhone|iOS|Android|Windows Phone)/i.test(navigator.userAgent);
-            //this.getAddressInfo(this.address);
+            this.addressInfo = addressInfo(1);
+            setInterval(() => {
+                this.addressInfo = addressInfo(1);
+            }, 500);
+            this.transferForm.fromAddress = this.addressInfo.address;
             this.pagesBuyList();
             this.pagesDepositList();
+            this.getAssetsListByAddress(this.transferForm.fromAddress);
         },
         mounted() {
             //延迟加载饼状图
@@ -443,11 +520,19 @@
                 //     rows: this.addressNumber
                 // };
             }, 500);
-
             //定时获取地址
             // this.addressInterval = setInterval(() => {
             //     //this.address = this.$route.query.address;
             // }, 500);
+        },
+        watch: {
+            addressInfo(val, old) {
+                this.activeName = 'buyTab';
+                if (val.address !== old.address && old.address) {
+                    this.transferForm.fromAddress = this.addressInfo.address;
+                    this.getAssetsListByAddress(this.transferForm.fromAddress);
+                }
+            }
         },
         beforeDestroy() {
             //离开界面清除定时器
@@ -456,6 +541,107 @@
             }
         },
         methods: {
+
+            /**
+             * 获取地址的资金列表
+             * @param address
+             **/
+            async getAssetsListByAddress(address) {
+                this.assetsList = [];
+                //获取本连的基本资产
+                let basicAssets = [];
+                let chainId = 2; //记录主链id
+                await this.$post('/', 'getAccountLedgerList', [address])
+                    .then((response) => {
+                        //console.log(response.result);
+                        if (response.hasOwnProperty("result")) {
+                            for (let item of response.result) {
+                                basicAssets.push({
+                                    type: 1,
+                                    symbol: item.symbol,
+                                    chainId: item.chainId,
+                                    assetId: item.assetId,
+                                    balance: timesDecimals(item.balance)
+                                });
+                                chainId = item.chainId;
+                            }
+                        }
+                    })
+                    .catch((error) => {
+                        console.log("getAccountLedgerList:" + error);
+                        this.assetsListLoading = false;
+                    });
+                ///console.log(basicAssets);
+
+                //获取本连的合约资产
+                let contractAssets = [];
+                await this.$post('/', 'getAccountTokens', [1, 100, address])
+                    .then((response) => {
+                        //console.log(response);
+                        if (response.hasOwnProperty("result")) {
+                            for (let itme of response.result.list) {
+                                contractAssets.push({
+                                    type: 2,
+                                    symbol: itme.tokenSymbol,
+                                    chainId: chainId,
+                                    balance: timesDecimals(itme.balance, itme.decimals),
+                                    contractAddress: itme.contractAddress,
+                                    decimals: itme.decimals
+                                })
+
+                            }
+                        }
+                    })
+                    .catch((error) => {
+                        console.log("getAccountTokens:" + error);
+                    });
+                //console.log(contractAssets);
+
+                //获取跨链的基本资产
+                let crossAssets = [];
+                await this.$post('/', 'getAccountCrossLedgerList', [address])
+                    .then((response) => {
+                        //console.log(response);
+                        if (response.hasOwnProperty("result")) {
+                            for (let item of response.result) {
+                                crossAssets.push({
+                                    type: 1,
+                                    symbol: item.symbol,
+                                    chainId: item.chainId,
+                                    assetId: item.assetId,
+                                    balance: timesDecimals(item.balance)
+                                })
+                            }
+                        }
+                    })
+                    .catch((err) => {
+                        console.log("getAccountCrossLedgerList:" + err);
+                    });
+                //console.log(crossAssets);
+
+                this.assetsList = [...basicAssets, ...contractAssets, ...crossAssets];
+                let isNuls = false; //是否有nuls资产
+                for (let item of this.assetsList) {
+                    if (item.symbol === 'NULS') {
+                        isNuls = true
+                    }
+                }
+                //没有nuls 资产 添加一个为nuls资产
+                if (!isNuls) {
+                    let newNulsAssets = {
+                        type: 1,
+                        symbol: 'NULS',
+                        chainId: 2,
+                        assetId: 1,
+                        balance: 0
+                    };
+                    this.assetsList.unshift(newNulsAssets);
+                }
+                //console.log(this.assetsList);
+                this.changeNuls(0);
+                this.getSymbol();
+            },
+
             /**
              * 买入/卖出挂单提交
              * @param formName
@@ -908,21 +1094,8 @@
                 })
             },
 
-        },
-
-        watch: {
-            address: function () {
-                this.activeName = 'buyTab';
-                //this.buyListLoading = true;
-                //this.getAddressInfo(this.address);
-                //this.pagesBuyList();
-                //this.pagesDepositList();
-                //延迟加载饼状图
-                setTimeout(() => {
-
-                }, 500);
-            }
         }
+
     }
 </script>
 

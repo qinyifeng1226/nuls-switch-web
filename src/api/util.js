@@ -123,6 +123,39 @@ export function addressInfo(type) {
 }
 
 /**
+ * 地址信息写入localStorage
+ */
+export function localStorageByAddressInfo(newAddressInfo) {
+  let addressList = [];
+  let newAddressList = [];
+  newAddressList.push(newAddressInfo);
+  let newArr = addressInfo(0);
+  if (newArr.length !== 0) {
+    let ifAddress = false;
+    for (let item of newArr) {
+      if (item.address === newAddressInfo.address) {
+        item.aesPri = newAddressInfo.aesPri;
+        item.pub = newAddressInfo.pub;
+        ifAddress = true
+      }
+      if (item.selection) {
+        newAddressList[0].selection = false;
+      }
+    }
+    if (ifAddress) {
+      addressList = [...newArr]
+    } else {
+      addressList = [...newArr, ...newAddressList]
+    }
+  } else {
+    newAddressInfo.selection = true;
+    addressList.push(newAddressInfo);
+  }
+  //console.log(addressList);
+  localStorage.setItem(chainIdNumber(), JSON.stringify(addressList));
+}
+
+/**
  * 超长数字显示
  * @param nu
  * @param powerNu

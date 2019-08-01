@@ -31,8 +31,8 @@
     import nuls from 'nuls-sdk-js'
     import nuls_api_sdk from 'nuls-sdk-js/lib/api/sdk';
     import {API_CHAIN_ID} from '@/config'
-    import {getAddressInfoByAddress} from '@/api/requestData'
-    import {getToken} from '@/api/requestData'
+    import {getAddressInfoByAddress, getToken} from '@/api/requestData'
+    import {localStorageByAddressInfo} from '@/api/util'
 
     export default {
         data() {
@@ -96,6 +96,7 @@
                 let newAdressInfo = {...this.newAddressInfo, ...addressInfo.data, ...tokenStorage};
                 if (addressInfo.success) {
                     localStorage.setItem('accountInfo', JSON.stringify(newAdressInfo));
+                    localStorageByAddressInfo(newAdressInfo);
                     this.$router.push({
                         name: 'backupsAddress'
                     });
