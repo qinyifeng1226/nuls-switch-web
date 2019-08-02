@@ -32,7 +32,7 @@
                         </el-row>
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.usable')}}：</span></div>
-                            <div class="order_label"><span>100</span></div>
+                            <div class="order_label"><span>{{toBalanceInfo.balance}}</span></div>
                             <div class="order_label"><span>{{toTokenSymbol}}</span></div>
                         </el-row>
                         <el-row class="order_btn_row">
@@ -66,7 +66,7 @@
                         </el-row>
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.usable')}}：</span></div>
-                            <div class="order_label"><span>1000</span></div>
+                            <div class="order_label"><span>{{fromBalanceInfo.balance}}</span></div>
                             <div class="order_label"><span>{{fromTokenSymbol}}</span></div>
                         </el-row>
                         <el-row class="order_btn_row">
@@ -295,7 +295,7 @@
     import Password from '@/components/PasswordBar'
     import SelectTokenBar from '@/components/SelectTokenBar'
     import {chainID, timesDecimals, multiDecimals, Times, addressInfo} from '@/api/util.js'
-    import {createOrder,tradingOrder,cancelOrder,confirmOrder,getOrderDetail} from '@/api/requestData'
+    import {createOrder, tradingOrder, cancelOrder, confirmOrder, getOrderDetail, getBalanceOrNonceByAddress} from '@/api/requestData'
     //import moment from 'moment'
 
     export default {
@@ -379,7 +379,8 @@
                 fromTokenSymbol: '',
                 toTokenSymbol: '',
                 addressInfo: '', //默认账户信息
-                balanceInfo: {},//账户余额信息
+                fromBalanceInfo: {},//账户原TOKEN余额信息
+                toBalanceInfo: {},//账户目标TOKEN余额信息
                 accountAddress: JSON.parse(localStorage.getItem('accountInfo')),
                 assetsList: [],//账户资产列表
                 changeAssets: {},//选择的资产信息
@@ -504,10 +505,15 @@
         created() {
             this.isMobile = /(iPhone|iOS|Android|Windows Phone)/i.test(navigator.userAgent);
             this.addressInfo = addressInfo(1);
+            //this.fromBalanceInfo=this.getNulsBalance(this.changeAssets.chainId, 1, this.transferForm.fromAddress);
+            this.fromBalanceInfo = this.getBalanceOrNonce(1, 2, 1, this.accountAddress.address);
+            this.toBalanceInfo = this.getBalanceOrNonce(2, 2, 1, this.accountAddress.address);
+            console.log(this.addressInfo);
+
             setInterval(() => {
                 this.addressInfo = addressInfo(1);
-            }, 500);
-            this.transferForm.fromAddress = this.addressInfo.address;
+            }, 5000);
+            //this.transferForm.fromAddress = this.addressInfo.address;
             this.pagesBuyList();
             this.pagesDepositList();
             this.getAssetsListByAddress(this.transferForm.fromAddress);
@@ -529,7 +535,7 @@
             addressInfo(val, old) {
                 this.activeName = 'buyTab';
                 if (val.address !== old.address && old.address) {
-                    this.transferForm.fromAddress = this.addressInfo.address;
+                    //this.transferForm.fromAddress = this.addressInfo.address;
                     this.getAssetsListByAddress(this.transferForm.fromAddress);
                 }
             }
@@ -541,7 +547,37 @@
             }
         },
         methods: {
+            /**
+             * 弹框确认提交
+             **/
+            async confirmTraanser() {
 
+                this.$refs.password.showPassword(true);
+            },
+
+            /**
+             * 获取地址余额信息
+             *  @param type 1-原token 2-目标token
+             *  @param assetChainId
+             *  @param assetId
+             *  @param address
+             **/
+            async getBalanceOrNonce(type, assetChainId, assetId, address) {
+                await getBalanceOrNonceByAddress(assetChainId, assetId, address).then((response) => {
+                    if (response.success) {
+                        if (1 == type) {
+                            this.fromBalanceInfo = response.data;
+                        }
+                        if (2 == type) {
+                            this.toBalanceInfo = response.data;
+                        }
+                    } else {
+                        this.$message({message: this.$t('public.getBalanceFail') + response, type: 'error', duration: 1000});
+                    }
+                }).catch((error) => {
+                    this.$message({message: this.$t('public.getBalanceException') + error, type: 'error', duration: 1000});
+                });
+            },
             /**
              * 获取地址的资金列表
              * @param address
@@ -551,7 +587,7 @@
                 //获取本连的基本资产
                 let basicAssets = [];
                 let chainId = 2; //记录主链id
-                await this.$post('/', 'getAccountLedgerList', [address])
+                await this.$post_nuls('/', 'getAccountLedgerList', [address])
                     .then((response) => {
                         //console.log(response.result);
                         if (response.hasOwnProperty("result")) {
@@ -569,13 +605,13 @@
                     })
                     .catch((error) => {
                         console.log("getAccountLedgerList:" + error);
-                        this.assetsListLoading = false;
+                        //this.assetsListLoading = false;
                     });
                 ///console.log(basicAssets);
 
                 //获取本连的合约资产
                 let contractAssets = [];
-                await this.$post('/', 'getAccountTokens', [1, 100, address])
+                await this.$post_nuls('/', 'getAccountTokens', [1, 100, address])
                     .then((response) => {
                         //console.log(response);
                         if (response.hasOwnProperty("result")) {
@@ -599,7 +635,7 @@
 
                 //获取跨链的基本资产
                 let crossAssets = [];
-                await this.$post('/', 'getAccountCrossLedgerList', [address])
+                await this.$post_nuls('/', 'getAccountCrossLedgerList', [address])
                     .then((response) => {
                         //console.log(response);
                         if (response.hasOwnProperty("result")) {
@@ -638,10 +674,37 @@
                     this.assetsList.unshift(newNulsAssets);
                 }
                 //console.log(this.assetsList);
-                this.changeNuls(0);
+                //this.changeNuls(0);
                 this.getSymbol();
             },
-
+            /**
+             * 获取收付费单位
+             **/
+            getSymbol() {
+                for (let item of this.assetsList) {
+                    if (item.chainId === chainID() && item.type === 1) {
+                        this.feeSymbol = item.symbol;
+                    }
+                }
+            },
+            /**
+             *  默认资产类型
+             * @param type 0：首次进入加载 1：填写地址以后判断默认为nuls
+             **/
+            changeNuls(type = 1) {
+                let defaultType = 'NULS';
+                if (type === 0) {
+                    if (this.$route.query.accountType) {
+                        defaultType = this.$route.query.accountType
+                    }
+                }
+                for (let item of this.assetsList) {
+                    if (item.symbol === defaultType) {
+                        this.changeAssets = item;
+                        this.transferForm.type = item.symbol;
+                    }
+                }
+            },
             /**
              * 买入/卖出挂单提交
              * @param formName
@@ -704,7 +767,7 @@
              * 获地址详细信息
              */
             //getAddressInfo(address) {
-                // this.$post('/', 'getAccount', [address])
+                // this.$post_nuls('/', 'getAccount', [address])
                 //     .then((response) => {
                 //         //console.log(response);
                 //         if (response.hasOwnProperty("result")) {

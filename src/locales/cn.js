@@ -79,7 +79,9 @@ const cn ={
     "searchTip":"地址/高度/txhash/...",
     "copy":"点击复制",
     "copysuccess":"复制成功",
-    "errorPwd": "密码错误"
+    "errorPwd": "密码错误",
+    "getBalanceFail": "获取账户余额失败:",
+    "getBalanceException": "获取账户余额异常:"
   },
 
   "type": {
@@ -111,36 +113,10 @@ const cn ={
     "3": "多签地址"
   },
 
-  "nodeType": {
-    "undefined":"",
-    "0": "综合排序",
-    "1": "信用值",
-    "2": "佣金",
-    "3": "委托量",
-    "4": "保证金"
-  },
-
   "history":{
     "0":"所有历史",
     "1":"加入历史",
     "2":"退出历史",
-  },
-
-  "nodeStatus": {
-    "undefined":"",
-    "0": "全部节点",
-    "1": "普通节点",
-    "2": "开发者节点",
-    "3": "大使节点"
-  },
-
-  "contractStatus": {
-    "undefined":"",
-    "-1":"创建失败",
-    "0": "未认证",
-    "1": "认证中",
-    "2": "认证通过",
-    "3": "已删除"
   },
 
   "home":{
@@ -153,33 +129,6 @@ const cn ={
     "home6":"共识奖励计算",
     "home7":"14天NULS交易历史",
     "home8":"更多"
-  },
-
-  "cale":{
-    "cale0":"共识奖励计算器",
-    "cale1":"参与委托",
-    "cale3":"日奖励",
-    "cale4":"周奖励",
-    "cale5":"月奖励",
-    "cale6":"年奖励",
-    "cale7":"请输入委托量",
-    "cale8":"委托量范围为 2000 到 500000",
-    "cale9":"委托量必须为数字",
-    "cale10":"请输入节点佣金比例",
-    "cale11":"佣金比例范围为 10 到 100",
-    "cale12":"佣金比例必须为数字",
-    "cale13":"请输入节点信用值",
-    "cale14":"信用值在 0 到 1",
-    "cale15":"信用值必须为数字",
-    "cale16":"请输入全网委托量",
-    "cale17":"全网委托量范围为 200000 到 100000000",
-    "cale18":"全网委托量必须为数字",
-    "cale19":"请输入节点保证金",
-    "cale20":"保证金范围为 20000 到 200000",
-    "cale21":"保证金必须为数字",
-    "cale22":"请输入委托量",
-    "cale23":"委托量范围为 200000 到 500000",
-    "cale24":"委托量必须为数字"
   },
 
   "block":{
@@ -223,76 +172,12 @@ const cn ={
     "transactionInfo11":"代币转账"
   },
 
-  "consensus":{
-    "consensus0":"全网委托信息",
-    "consensus1":"共识中节点",
-    "consensus2":"节点信息",
-    "consensus3":"轮次信息",
-    "consensus4":"当前轮次",
-    "consensus5":"当前出块节点",
-    "consensus6":"本轮出块节点数",
-    "consensus7":"本轮时间区间",
-    "consensus8":"共识轮次列表",
-    "consensus9":"时间区间",
-    "consensus10":"出块节点数",
-    "consensus11":"正常出块节点数",
-    "search":"请输入别名/地址/ID"
-  },
-
-  "consensusInfo":{
-    "consensusInfo0":"持续运行时间",
-    "consensusInfo1":"总出块数",
-    "consensusInfo2":"本轮出块时间",
-    "consensusInfo3":"节点版本",
-    "consensusInfo4":"保证金奖励",
-    "consensusInfo5":"佣金奖励",
-    "consensusInfo6":"总奖励",
-    "consensusInfo7":"出块列表",
-    "consensusInfo8":"块收益",
-    "consensusInfo9":"红黄牌",
-    "consensusInfo10":"当前委托信息",
-    "consensusInfo11":"委托地址",
-    "consensusInfo12":"委托时间",
-    "consensusInfo13":"历史委托信息",
-    "consensusInfo14":"创建者奖励",
-    "consensusInfo15":"节点创建者奖励等于保证金奖励和收取委托人佣金的总和",
-    "consensusInfo16":"委托者总奖励",
-  },
-
-  "rotationInfo":{
-    "rotationInfo0":"轮",
-    "rotationInfo1":"只显示红黄牌",
-    "rotationInfo2":"本轮编号",
-    "rotationInfo3":"区块列表"
-  },
-
   "contracts":{
-    "contracts0":"所有合约",
-    "contracts1":"隐藏NRC-20合约",
-    "contracts2":"NRC-20 合约",
-    "contracts3":"总发行量",
-    "contracts":""
+    "contract0":""
   },
 
   "contractsInfo":{
     "contractsInfo0":"代码"
-  },
-
-  "codeInfo":{
-    "codeInfo0":"合约源代码已认证",
-    "codeInfo1":"编译器",
-    "codeInfo2":"认证时间",
-    "codeInfo3":"合约代码",
-    "codeInfo4":"合约源代码未认证",
-    "codeInfo5":"对不起，源代码认证失败!",
-    "codeInfo6":"上传源码进行认证",
-    "codeInfo7":"源码上传注意事项",
-    "codeInfo8":"1.请将源码压缩为一个zip包再进行上传",
-    "codeInfo9":"2.压缩包中的文件目录结构和代码需和部署时保持已一致，否则将导致认证不通过",
-    "codeInfo10":"对不起，上传的文件不超过5M",
-    "codeInfo11":"请求超时请重试",
-    "codeInfo12":"请输入正确的Address、Txhash、Block",
-    "codeInfo13":"3.zip包中不可包含非Java文件，否则将导致上传认证失败",
   },
 
   "tokenInfo":{

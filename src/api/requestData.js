@@ -135,8 +135,8 @@ export async function getAddressInfoByAddress(address) {
  * @param address
  * @returns {Promise<any>}
  */
-export async function getBalanceOrNonceByAddress(address, assetId = 1) {
-    return await post_nuls('/', 'getAccountBalance', [assetId, address])
+export async function getBalanceOrNonceByAddress(assetChainId = 2, assetId = 1, address) {
+    return await post_nuls('/', 'getAccountBalance', [assetChainId, assetId, address])
         .then((response) => {
             console.log(response);
             if (response.hasOwnProperty("result")) {
