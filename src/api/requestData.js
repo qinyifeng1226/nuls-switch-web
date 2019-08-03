@@ -1,7 +1,7 @@
 import {post_nuls} from './https'
 import {post} from './https'
 import {get} from './https'
-import {Plus, chainID} from './util'
+import {Plus, chainID, timesDecimals} from './util'
 
 /**
  * 计算手续费
@@ -26,13 +26,13 @@ export function countCtxFee(tx, signatrueCount) {
 }
 
 /**
- * 获取inputs and outputs
+ * 所有交易 获取inputs and outputs
  * @param transferInfo
  * @param balanceInfo
  * @param type
  * @returns {*}
  **/
-export async function inputsOrOutputs(transferInfo, balanceInfo, type) {
+export async function inputsOrOutputsAllTx(transferInfo, balanceInfo, type) {
     let newAmount = Number(Plus(transferInfo.amount, transferInfo.fee));
     let newLocked = 0;
     let newNonce = balanceInfo.nonce;
@@ -109,6 +109,61 @@ export async function inputsOrOutputs(transferInfo, balanceInfo, type) {
 }
 
 /**
+ * 转账交易获取 inputs and outputs
+ * @param transferInfo
+ * @param balanceInfo
+ * @returns {*}
+ **/
+export async function inputsOrOutputs(transferInfo, balanceInfo) {
+    let newAmount = Number(Plus(transferInfo.amount, transferInfo.fee));
+    let newLocked = 0;
+    let newNonce = balanceInfo.nonce;
+    let newoutputAmount = transferInfo.amount;
+    let newLockTime = 0;
+    if (balanceInfo.balance < newAmount) {
+        return {success: false, data: "Your balance is not enough."}
+    }
+
+    let inputs = [{
+        address: transferInfo.fromAddress,
+        assetsChainId: transferInfo.assetsChainId,
+        assetsId: transferInfo.assetsId,
+        amount: newAmount,
+        locked: newLocked,
+        nonce: newNonce
+    }];
+
+    if (transferInfo.assetsChainId !== chainID()) {
+        inputs[0].amount = transferInfo.amount;
+        //账户转出资产余额
+        let nulsbalance = await getBalanceOrNonceByAddress(chainID(), transferInfo.assetsId, transferInfo.fromAddress);
+        if (nulsbalance.data.balance < 100000) {
+            console.log("余额小于手续费");
+            return
+        }
+        inputs.push({
+            address: transferInfo.fromAddress,
+            assetsChainId: chainID(),
+            assetsId: transferInfo.assetsId,
+            amount: 100000,
+            locked: newLocked,
+            nonce: nulsbalance.data.nonce
+        })
+    }
+    let outputs = [];
+    outputs = [{
+        address: transferInfo.toAddress ? transferInfo.toAddress : transferInfo.fromAddress,
+        assetsChainId: transferInfo.assetsChainId,
+        assetsId: transferInfo.assetsId,
+        amount: newoutputAmount,
+        lockTime: newLockTime
+    }];
+    //console.log(inputs);
+    //console.log(outputs);
+    return {success: true, data: {inputs: inputs, outputs: outputs}};
+}
+
+/**
  * 获取地址信息根据地址
  * @param address
  * @returns {Promise<any>}
@@ -133,14 +188,19 @@ export async function getAddressInfoByAddress(address) {
  * @param assetChainId
  * @param assetId
  * @param address
+ * @param divDecimals 是否去除默认精度
  * @returns {Promise<any>}
  */
-export async function getBalanceOrNonceByAddress(assetChainId = 2, assetId = 1, address) {
+export async function getBalanceOrNonceByAddress(assetChainId = 2, assetId = 1, address, divDecimals = 0) {
     return await post_nuls('/', 'getAccountBalance', [assetChainId, assetId, address])
         .then((response) => {
-            console.log(response);
+            //console.log(response);
             if (response.hasOwnProperty("result")) {
-                return {success: true, data: {balance: response.result.balance, nonce: response.result.nonce}}
+                let balance = response.result.balance;
+                if (divDecimals == 1) {
+                    balance = timesDecimals(balance);
+                }
+                return {success: true, data: {balance: balance, nonce: response.result.nonce}}
             } else {
                 return {success: false, data: response}
             }
@@ -196,7 +256,7 @@ export async function broadcastTx(txHex) {
 export async function validateAndBroadcast(txHex) {
     return await post_nuls('/', 'validateTx', [txHex])
         .then((response) => {
-            //console.log(response);
+            console.log(response);
             if (response.hasOwnProperty("result")) {
                 let newHash = response.result.value;
                 return post_nuls('/', 'broadcastTx', [txHex])

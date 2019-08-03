@@ -256,7 +256,7 @@
                     <el-table-column :label="$t('orderInfo.status')" width="150" align="left">
                         <template slot-scope="scope">
                             <span v-if="scope.row.status==1"> 确认中 </span>
-                            <el-button type="primary" size="mini" @click="confirmOrderClick(scope.row.txId)" v-if="scope.row.status==0 && scope.row.status!=9">确认</el-button>
+                            <el-button type="primary" size="mini" @click="confirmOrderClick(scope.row.txId,scope.row.txHex)" v-if="scope.row.status==0 && scope.row.status!=9">确认</el-button>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -291,11 +291,20 @@
 <script>
     import nuls from 'nuls-sdk-js'
     import sdk from 'nuls-sdk-js/lib/api/sdk'
-    import utils from 'nuls-sdk-js/lib/utils/utils'
     import Password from '@/components/PasswordBar'
     import SelectTokenBar from '@/components/SelectTokenBar'
-    import {chainID, timesDecimals, multiDecimals, Times, addressInfo} from '@/api/util.js'
-    import {createOrder, tradingOrder, cancelOrder, confirmOrder, getOrderDetail, getBalanceOrNonceByAddress} from '@/api/requestData'
+    import {addressInfo, chainID, multiDecimals, Times, timesDecimals} from '@/api/util.js'
+    import {
+        createOrder,
+        tradingOrder,
+        cancelOrder,
+        confirmOrder,
+        getOrderDetail,
+        getBalanceOrNonceByAddress,
+        inputsOrOutputs,
+        countFee,
+        validateAndBroadcast
+    } from '@/api/requestData'
     //import moment from 'moment'
 
     export default {
@@ -379,6 +388,7 @@
                 fromTokenSymbol: '',
                 toTokenSymbol: '',
                 addressInfo: '', //默认账户信息
+                balanceInfo: {},//当前账户余额信息
                 fromBalanceInfo: {},//账户原TOKEN余额信息
                 toBalanceInfo: {},//账户目标TOKEN余额信息
                 accountAddress: JSON.parse(localStorage.getItem('accountInfo')),
@@ -435,6 +445,8 @@
                 price: '',
                 //订单交易ID
                 txId: '',
+                //订单交易HEX
+                txHex: '',
                 //地址
                 address: localStorage.getItem('accountInfo') != null ? JSON.parse(localStorage.getItem('accountInfo')).address : '',
                 //可买挂单列表
@@ -506,9 +518,13 @@
             this.isMobile = /(iPhone|iOS|Android|Windows Phone)/i.test(navigator.userAgent);
             this.addressInfo = addressInfo(1);
             //this.fromBalanceInfo=this.getNulsBalance(this.changeAssets.chainId, 1, this.transferForm.fromAddress);
-            this.fromBalanceInfo = this.getBalanceOrNonce(1, 2, 1, this.accountAddress.address);
-            this.toBalanceInfo = this.getBalanceOrNonce(2, 2, 1, this.accountAddress.address);
-            console.log(this.addressInfo);
+            // balanceInfo
+            this.getBalanceOrNonce(0, 2, 1, this.accountAddress.address);
+            // fromBalanceInfo
+            this.getBalanceOrNonce(1, 2, 1, this.accountAddress.address, 1);
+            // toBalanceInfo
+            this.getBalanceOrNonce(2, 2, 1, this.accountAddress.address, 1);
+            //console.log(this.addressInfo);
 
             setInterval(() => {
                 this.addressInfo = addressInfo(1);
@@ -561,15 +577,17 @@
              *  @param assetChainId
              *  @param assetId
              *  @param address
+             *  @param divDecimals 是否去除默认精度
              **/
-            async getBalanceOrNonce(type, assetChainId, assetId, address) {
-                await getBalanceOrNonceByAddress(assetChainId, assetId, address).then((response) => {
+            async getBalanceOrNonce(type, assetChainId, assetId, address, divDecimals) {
+                await getBalanceOrNonceByAddress(assetChainId, assetId, address, divDecimals).then((response) => {
                     if (response.success) {
                         if (1 == type) {
                             this.fromBalanceInfo = response.data;
-                        }
-                        if (2 == type) {
+                        } else if (2 == type) {
                             this.toBalanceInfo = response.data;
+                        } else {
+                            this.balanceInfo = response.data;
                         }
                     } else {
                         this.$message({message: this.$t('public.getBalanceFail') + response, type: 'error', duration: 1000});
@@ -877,8 +895,78 @@
                 const pri = nuls.decrypteOfAES(this.accountAddress.aesPri, password);
                 const newAddressInfo = nuls.importByKey(chainID(), pri, password);
                 if (newAddressInfo.address === this.accountAddress.address) {
+                    // 检查余额是否充足
+
+                    // 组装交易并签名
+                    // let transferInfo = {
+                    //     fromAddress: this.transferForm.fromAddress,
+                    //     assetsChainId: this.changeAssets.chainId,
+                    //     assetsId: 1,
+                    //     fee: 5000 //10000
+                    // };
+                    let fromAddress = this.address;
+                    let toAddress = "tNULSeBaMkHU3HYpX7xdf9mQWXciTz9xCStHuq";
+                    let assetsChainId = 2; //TODO  USDT链，转出资产应该是目标链资产，也就是对方期待接收到的资产
+                    let assetsId = 1;
+                    let transferInfo = {
+                        fromAddress: fromAddress,
+                        toAddress: toAddress,
+                        assetsChainId: assetsChainId,
+                        assetsId: assetsId,
+                        fee: 100000
+                    };
+                    let inOrOutputs = {};
+                    let tAssemble = [];
+                    //transferInfo['toAddress'] = this.transferForm.toAddress;
+                    //let amountA=20;//20-NULS
+                    let amount = 10;//10-USDT
+                    //transferInfoA['amount'] = Number(Times(amountA, 100000000).toString());
+                    transferInfo['amount'] = Number(Times(amount, 100000000).toString());
+                    inOrOutputs = await inputsOrOutputs(transferInfo, this.balanceInfo);
+                    if (!inOrOutputs.success) {
+                        this.$message(inOrOutputs.data);
+                        return false;
+                    }
+                    // 临时将最终确认的input、output写到这里，因为目前jssdk未提供反序列交易的方法
+                    fromAddress = "tNULSeBaMkHU3HYpX7xdf9mQWXciTz9xCStHuq";
+                    toAddress = "tNULSeBaMjUnoMkTh9bSCYu1sGJM2vQZqGnvMK";
+                    assetsChainId = 2; //TODO  USDT链，转出资产应该是目标链资产，也就是对方期待接收到的资产
+                    assetsId = 1;
+                    let transferInfoB = {
+                        fromAddress: fromAddress,
+                        toAddress: toAddress,
+                        assetsChainId: assetsChainId,
+                        assetsId: assetsId,
+                        fee: 100000
+                    };
+                    let inOrOutputsB = {};
+                    //let tAssemble = [];
+                    //transferInfo['toAddress'] = this.transferForm.toAddress;
+                    let amountB=20;//20-NULS
+                    let balanceInfoB=this.balanceInfo;
+                    //transferInfoA['amount'] = Number(Times(amountA, 100000000).toString());
+                    transferInfoB['amount'] = Number(Times(amountB, 100000000).toString());
+                    inOrOutputsB = await inputsOrOutputs(transferInfoB, balanceInfoB);
+                    console.log(inOrOutputsB);
+                    console.log(inOrOutputsB.data.inputs);
+                    let inputs = [...inOrOutputs.data.inputs, ...inOrOutputsB.data.inputs];
+                    let outputs = [...inOrOutputs.data.outputs, ...inOrOutputsB.data.outputs];
+                    //console.log(inOrOutputs);
+                    //console.log(inputs);
+                    //console.log(JSON.parse(inOrOutputs));
+                    //交易组装
+                    //tAssemble = await nuls.transactionAssemble(inOrOutputs.data.inputs, inOrOutputs.data.outputs, this.transferForm.remarks, 2);
+                    tAssemble = await nuls.transactionAssemble(inputs, outputs, this.transferForm.remarks, 2);
+                    console.log(tAssemble);
+                    //获取手续费
+                    //let newFee = countFee(tAssemble, 1);
+                    //交易签名
+                    let txhex = await nuls.transactionSerialize(nuls.decrypteOfAES(this.addressInfo.aesPri, password), this.addressInfo.pub, tAssemble);
+                    console.log(txhex);
                     // 买卖TOKEN提交
                     let params = {
+                        //"txHash": newAddressInfo.address,
+                        "txHex": txhex,
                         "address": newAddressInfo.address,
                         "orderId": this.orderId,
                         "txNum": multiDecimals(this.txNum, 8),
@@ -889,14 +977,26 @@
                         if (response.success) {
                             this.buyTokenForm.txNum = '';
                             this.sellTokenForm.txNum = '';
-                            this.$message({message: this.$t('switch.tradingOrderSuccess'), type: 'success', duration: 1000});
+                            this.$message({
+                                message: this.$t('switch.tradingOrderSuccess'),
+                                type: 'success',
+                                duration: 1000
+                            });
                         } else {
-                            this.$message({message: this.$t('switch.tradingOrderError') + response.data, type: 'error', duration: 1000});
+                            this.$message({
+                                message: this.$t('switch.tradingOrderError') + response.data,
+                                type: 'error',
+                                duration: 1000
+                            });
                         }
                     }).catch((err) => {
-                        this.$message({message: this.$t('switch.tradingOrderError') + err, type: 'error', duration: 1000});
+                        this.$message({
+                            message: this.$t('switch.tradingOrderError') + err,
+                            type: 'error',
+                            duration: 1000
+                        });
                     });
-                }else {
+                } else {
                     this.$message({message: this.$t('public.errorPwd'), type: 'error', duration: 1000});
                 }
             },
@@ -987,8 +1087,9 @@
              *  确认订单，获取密码框的密码
              * @param orderId
              **/
-            confirmOrderClick(txId) {
+            confirmOrderClick(txId,txHex) {
                 this.txId = txId;
+                this.txHex = txHex;
                 this.$refs.confirmOrderPassword.showPassword(true);
             },
             /**
@@ -1000,11 +1101,75 @@
                 const newAddressInfo = nuls.importByKey(chainID(), pri, password);
                 if (newAddressInfo.address === this.accountAddress.address) {
                     // 组装交易数据上链 TODO
+                    // 反序列化txHex,追加from、to，再次签名
+                    let tAssemble = Buffer.from(this.txHex, 'hex');
+
+                    let fromAddress = this.address;
+                    let toAddress = "tNULSeBaMjUnoMkTh9bSCYu1sGJM2vQZqGnvMK";
+                    let assetsChainId = 2; // NULS链
+                    let assetsId = 1;
+                    let transferInfo = {
+                        fromAddress: fromAddress,
+                        toAddress: toAddress,
+                        assetsChainId: assetsChainId,
+                        assetsId: assetsId,
+                        fee: 100000
+                    };
+                    let inOrOutputs = {};
+                    //let tAssemble = [];
+                    //transferInfo['toAddress'] = this.transferForm.toAddress;
+                    let amount=20;//20-NULS
+                    //let amountB = 10;//10-USDT
+                    //transferInfoA['amount'] = Number(Times(amountA, 100000000).toString());
+                    transferInfo['amount'] = Number(Times(amount, 100000000).toString());
+                    inOrOutputs = await inputsOrOutputs(transferInfo, this.balanceInfo);
+                    //交易组装，把新的input、output追加到原始交易中
+                    //let inOrOutputsNew = {...tx., ...addressInfo.data};
+
+                    //tAssemble = await nuls.transactionAssemble(inOrOutputs.data.inputs, inOrOutputs.data.outputs, this.transferForm.remarks, 2);
+                    //交易签名
+                    let txhex = "";
+                    //获取手续费
+                    // let newFee = countFee(tAssemble, 1);
+                    // //手续费大于0.001的时候重新组装交易及签名
+                    // if (transferInfo.fee !== newFee) {
+                    //     transferInfo.fee = newFee;
+                    //     if (this.changeAssets.type === 1) {
+                    //         inOrOutputs = await inputsOrOutputs(transferInfo, this.balanceInfo, 2);
+                    //         tAssemble = await nuls.transactionAssemble(inOrOutputs.data.inputs, inOrOutputs.data.outputs, this.transferForm.remarks, 2);
+                    //     }
+                    //     txhex = await nuls.transactionSerialize(nuls.decrypteOfAES(this.addressInfo.aesPri, password), this.addressInfo.pub, tAssemble);
+                    // } else {
+                    //     txhex = await nuls.transactionSerialize(nuls.decrypteOfAES(this.addressInfo.aesPri, password), this.addressInfo.pub, tAssemble);
+                    // }
+                    txhex = await nuls.transactionSerialize(nuls.decrypteOfAES(this.addressInfo.aesPri, password), this.addressInfo.pub, tAssemble);
+                    console.log(txhex);
+                    //验证并广播交易
                     let txHash='123';
+                    await validateAndBroadcast(txhex).then((response) => {
+                        //console.log(response);
+                        //this.transferLoading = false;
+                        if (response.success) {
+                            //this.toUrl("txList");
+                            txHash = response.hash;
+                            console.log("txHash===="+txHash);
+                        } else {
+                            this.$message({
+                                message: this.$t('error.' + response.data.code),
+                                type: 'error',
+                                duration: 3000
+                            });
+                        }
+                    }).catch((err) => {
+                        //this.transferLoading = false;
+                        this.$message({message: this.$t('public.err1') + err, type: 'error', duration: 1000});
+                    });
+
                     // 确认订单提交
                     let params = {
                         "txId": this.txId,
-                        "txHash": txHash
+                        "txHash": txHash,
+                        "dataHex": txhex
                     };
                     await confirmOrder(params).then((response) => {
                         console.log(response);
@@ -1110,6 +1275,7 @@
                                 item.price = timesDecimals(item.price, 8);
                                 item.txNum = timesDecimals(item.txNum, 8);
                                 item.totalNum = timesDecimals(item.totalNum, 8);
+                                item.totalAmount = timesDecimals(item.totalAmount, 8);
                             }
                             this.depositList = response.result.records;
                             this.depositListPager.total = response.result.total;
