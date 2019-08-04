@@ -9,8 +9,8 @@ import {API_CHAIN_ID} from './../config'
  * @constructor
  */
 export function Power(arg) {
-  let newPower = new BigNumber(10);
-  return newPower.pow(arg);
+    let newPower = new BigNumber(10);
+    return newPower.pow(arg);
 }
 
 /**
@@ -21,8 +21,8 @@ export function Power(arg) {
  * @constructor
  */
 export function Minus(nu, arg) {
-  let newMinus = new BigNumber(nu);
-  return newMinus.minus(arg);
+    let newMinus = new BigNumber(nu);
+    return newMinus.minus(arg);
 }
 
 /**
@@ -33,8 +33,8 @@ export function Minus(nu, arg) {
  * @constructor
  */
 export function Times(nu, arg) {
-  let newTimes = new BigNumber(nu);
-  return newTimes.times(arg);
+    let newTimes = new BigNumber(nu);
+    return newTimes.times(arg);
 }
 
 /**
@@ -45,8 +45,8 @@ export function Times(nu, arg) {
  * @constructor
  */
 export function Plus(nu, arg) {
-  let newPlus = new BigNumber(nu);
-  return newPlus.plus(arg);
+    let newPlus = new BigNumber(nu);
+    return newPlus.plus(arg);
 }
 
 /**
@@ -57,8 +57,8 @@ export function Plus(nu, arg) {
  * @constructor
  */
 export function Division(nu, arg) {
-  let newDiv = new BigNumber(nu);
-  return newDiv.div(arg);
+    let newDiv = new BigNumber(nu);
+    return newDiv.div(arg);
 }
 
 /**
@@ -71,16 +71,16 @@ export const copys = (value) => copy(value);
  * 数字除以精度系数
  */
 export function timesDecimals(nu, decimals = 8) {
-  let newNu = new BigNumber(Division(nu, Power(decimals)).toString());
-  return newNu.toFormat().replace(/[,]/g, '');
+    let newNu = new BigNumber(Division(nu, Power(decimals)).toString());
+    return newNu.toFormat().replace(/[,]/g, '');
 }
 
 /**
  * 数字除以精度系数
  */
 export function multiDecimals(nu, decimals = 8) {
-  let newNu = new BigNumber(Times(nu, Power(decimals)).toString());
-  return newNu.toFormat().replace(/[,]/g, '');
+    let newNu = new BigNumber(Times(nu, Power(decimals)).toString());
+    return newNu.toFormat().replace(/[,]/g, '');
 }
 
 /**
@@ -88,7 +88,7 @@ export function multiDecimals(nu, decimals = 8) {
  * @returns {number}
  */
 export function chainID() {
-  return API_CHAIN_ID
+    return API_CHAIN_ID
 }
 
 /**
@@ -96,7 +96,7 @@ export function chainID() {
  * @returns {string}
  */
 export function chainIdNumber() {
-  return 'chainId' + chainID();
+    return 'chainId' + chainID();
 }
 
 /**
@@ -104,55 +104,61 @@ export function chainIdNumber() {
  * @param type 0:地址列表，1:选中地址
  * @returns {*}
  */
-export function addressInfo(type) {
-  let chainNumber = 'chainId' + chainID();
-  let addressList = localStorage.hasOwnProperty(chainNumber) ? JSON.parse(localStorage.getItem(chainNumber)) : [];
-  if (addressList) {
-    if (type === 0) {
-      return addressList
-    } else {
-      for (let item  of addressList) {
-        if (item.selection) {
-          return item
+export function addressInfo(type, address) {
+    let chainNumber = 'chainId' + chainID();
+    let addressList = localStorage.hasOwnProperty(chainNumber) ? JSON.parse(localStorage.getItem(chainNumber)) : [];
+    if (addressList) {
+        if (type === 0) {
+            return addressList
+        } else {
+            for (let item  of addressList) {
+                if (address != '') {
+                    if (item.address === address) {
+                        return item
+                    }
+                } else {
+                    if (item.selection) {
+                        return item
+                    }
+                }
+            }
         }
-      }
+    } else {
+        return addressList
     }
-  } else {
-    return addressList
-  }
 }
 
 /**
  * 地址信息写入localStorage
  */
 export function localStorageByAddressInfo(newAddressInfo) {
-  let addressList = [];
-  let newAddressList = [];
-  newAddressList.push(newAddressInfo);
-  let newArr = addressInfo(0);
-  if (newArr.length !== 0) {
-    let ifAddress = false;
-    for (let item of newArr) {
-      if (item.address === newAddressInfo.address) {
-        item.aesPri = newAddressInfo.aesPri;
-        item.pub = newAddressInfo.pub;
-        ifAddress = true
-      }
-      if (item.selection) {
-        newAddressList[0].selection = false;
-      }
-    }
-    if (ifAddress) {
-      addressList = [...newArr]
+    let addressList = [];
+    let newAddressList = [];
+    newAddressList.push(newAddressInfo);
+    let newArr = addressInfo(0);
+    if (newArr.length !== 0) {
+        let ifAddress = false;
+        for (let item of newArr) {
+            if (item.address === newAddressInfo.address) {
+                item.aesPri = newAddressInfo.aesPri;
+                item.pub = newAddressInfo.pub;
+                ifAddress = true
+            }
+            if (item.selection) {
+                newAddressList[0].selection = false;
+            }
+        }
+        if (ifAddress) {
+            addressList = [...newArr]
+        } else {
+            addressList = [...newArr, ...newAddressList]
+        }
     } else {
-      addressList = [...newArr, ...newAddressList]
+        newAddressInfo.selection = true;
+        addressList.push(newAddressInfo);
     }
-  } else {
-    newAddressInfo.selection = true;
-    addressList.push(newAddressInfo);
-  }
-  //console.log(addressList);
-  localStorage.setItem(chainIdNumber(), JSON.stringify(addressList));
+    //console.log(addressList);
+    localStorage.setItem(chainIdNumber(), JSON.stringify(addressList));
 }
 
 /**
@@ -162,8 +168,8 @@ export function localStorageByAddressInfo(newAddressInfo) {
  * @returns {string}
  */
 export function langNumber(nu, powerNu) {
-  let newNu = new BigNumber(Division(nu, powerNu).toString());
-  return newNu.toFormat().replace(/[,]/g, '');
+    let newNu = new BigNumber(Division(nu, powerNu).toString());
+    return newNu.toFormat().replace(/[,]/g, '');
 }
 
 /**
@@ -173,11 +179,11 @@ export function langNumber(nu, powerNu) {
  * @returns {*}
  */
 export function superLong(string, leng) {
-  if (string && string.length > 10) {
-    return string.substr(0, leng) + "...." + string.substr(string.length - leng, string.length);
-  } else {
-    return string;
-  }
+    if (string && string.length > 10) {
+        return string.substr(0, leng) + "...." + string.substr(string.length - leng, string.length);
+    } else {
+        return string;
+    }
 }
 
 /**
@@ -187,15 +193,15 @@ export function superLong(string, leng) {
  * @param type 0:路由跳转 1：连接跳转（浏览器、其他地址）
  */
 export function connect(name, parameter, type = 0) {
-  if (type === 0) {
-    this.$router.push({
-      name: name,
-      query: parameter
-    });
-  } else {
-    //shell.openExternal(newUrl);
-    window.open(name, '_blank');
-  }
+    if (type === 0) {
+        this.$router.push({
+            name: name,
+            query: parameter
+        });
+    } else {
+        //shell.openExternal(newUrl);
+        window.open(name, '_blank');
+    }
 
 }
 
@@ -205,16 +211,16 @@ export function connect(name, parameter, type = 0) {
  * @returns {*}
  */
 export function getLocalTime(time) {
-  if (typeof time !== 'number') return;
-  let d = new Date();
-  let offset = d.getTimezoneOffset() * 60000;
-  let localUtc = new Date().getTimezoneOffset() / 60;
-  let utcTime;
-  if (localUtc > 0) {
-    utcTime = time - offset;
-  } else {
-    utcTime = time + offset;
-  }
-  let localTime = utcTime + 3600000 * Math.abs(localUtc);
-  return new Date(localTime);
+    if (typeof time !== 'number') return;
+    let d = new Date();
+    let offset = d.getTimezoneOffset() * 60000;
+    let localUtc = new Date().getTimezoneOffset() / 60;
+    let utcTime;
+    if (localUtc > 0) {
+        utcTime = time - offset;
+    } else {
+        utcTime = time + offset;
+    }
+    let localTime = utcTime + 3600000 * Math.abs(localUtc);
+    return new Date(localTime);
 }

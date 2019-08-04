@@ -256,7 +256,7 @@
                     <el-table-column :label="$t('orderInfo.status')" width="150" align="left">
                         <template slot-scope="scope">
                             <span v-if="scope.row.status==1"> 确认中 </span>
-                            <el-button type="primary" size="mini" @click="confirmOrderClick(scope.row.txId,scope.row.txHex)" v-if="scope.row.status==0 && scope.row.status!=9">确认</el-button>
+                            <el-button type="primary" size="mini" @click="confirmOrderClick(scope.row.txId,scope.row.txHash,scope.row.txHex)" v-if="scope.row.status==0 && scope.row.status!=9">确认</el-button>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -364,24 +364,24 @@
                     //callback();
                 }
             };
-            let validateGas = (rule, value, callback) => {
-                if (!value) {
-                    callback(new Error(this.$t('deploy.deploy8')));
-                } else if (value < 1 || value > 10000000) {
-                    callback(new Error(this.$t('deploy.deploy81')));
-                } else {
-                    callback();
-                }
-            };
-            let validateTxPrice = (rule, value, callback) => {
-                if (!value) {
-                    callback(new Error(this.$t('deploy.deploy9')));
-                } else if (value < 1) {
-                    callback(new Error(this.$t('deploy.deploy91')));
-                } else {
-                    callback();
-                }
-            };
+            // let validateGas = (rule, value, callback) => {
+            //     if (!value) {
+            //         callback(new Error(this.$t('deploy.deploy8')));
+            //     } else if (value < 1 || value > 10000000) {
+            //         callback(new Error(this.$t('deploy.deploy81')));
+            //     } else {
+            //         callback();
+            //     }
+            // };
+            // let validateTxPrice = (rule, value, callback) => {
+            //     if (!value) {
+            //         callback(new Error(this.$t('deploy.deploy9')));
+            //     } else if (value < 1) {
+            //         callback(new Error(this.$t('deploy.deploy91')));
+            //     } else {
+            //         callback();
+            //     }
+            // };
             return {
                 fromTokenId: '',
                 toTokenId: '',
@@ -445,6 +445,7 @@
                 price: '',
                 //订单交易ID
                 txId: '',
+                txHash: '',
                 //订单交易HEX
                 txHex: '',
                 //地址
@@ -516,20 +517,23 @@
         },
         created() {
             this.isMobile = /(iPhone|iOS|Android|Windows Phone)/i.test(navigator.userAgent);
-            this.addressInfo = addressInfo(1);
-            //this.fromBalanceInfo=this.getNulsBalance(this.changeAssets.chainId, 1, this.transferForm.fromAddress);
-            // balanceInfo
-            this.getBalanceOrNonce(0, 2, 1, this.accountAddress.address);
-            // fromBalanceInfo
-            this.getBalanceOrNonce(1, 2, 1, this.accountAddress.address, 1);
-            // toBalanceInfo
-            this.getBalanceOrNonce(2, 2, 1, this.accountAddress.address, 1);
+            this.addressInfo = addressInfo(1, this.address);
             //console.log(this.addressInfo);
+            //this.fromBalanceInfo=this.getNulsBalance(this.changeAssets.chainId, 1, this.transferForm.fromAddress);
+            if (this.accountAddress != null) {
+                // balanceInfo
+                this.getBalanceOrNonce(0, 2, 1, this.accountAddress.address);
+                // fromBalanceInfo
+                this.getBalanceOrNonce(1, 2, 1, this.accountAddress.address, 1);
+                // toBalanceInfo
+                this.getBalanceOrNonce(2, 2, 1, this.accountAddress.address, 1);
+            }
 
             setInterval(() => {
-                this.addressInfo = addressInfo(1);
-            }, 5000);
+                this.addressInfo = addressInfo(1, this.address);
+            }, 30000);
             //this.transferForm.fromAddress = this.addressInfo.address;
+
             this.pagesBuyList();
             this.pagesDepositList();
             this.getAssetsListByAddress(this.transferForm.fromAddress);
@@ -961,11 +965,14 @@
                     //获取手续费
                     //let newFee = countFee(tAssemble, 1);
                     //交易签名
+                    console.log("address====="+this.addressInfo.address);
+                    console.log("pubkey====="+this.addressInfo.pub);
                     let txhex = await nuls.transactionSerialize(nuls.decrypteOfAES(this.addressInfo.aesPri, password), this.addressInfo.pub, tAssemble);
                     console.log(txhex);
                     // 买卖TOKEN提交
+                    console.log("hex====="+tAssemble.hash.toString("hex"));
                     let params = {
-                        //"txHash": newAddressInfo.address,
+                        "txHash": tAssemble.hash.toString("hex"),
                         "txHex": txhex,
                         "address": newAddressInfo.address,
                         "orderId": this.orderId,
@@ -1054,13 +1061,13 @@
                 //     "orderId": this.orderId
                 // };
                 // 查询订单交易记录
-                this.pagesTradeList(orderId);
+                this.pagesTradeList();
             },
             /**
              * 订单交易列表 分页
              */
-            async pagesTradeList(orderId){
-                let params = {"current":  this.tradeListPager.page, "pageSize": this.tradeListPager.rows, "orderId": orderId};
+            async pagesTradeList(){
+                let params = {"current":  this.tradeListPager.page, "pageSize": this.tradeListPager.rows, "orderId": this.orderId};
                 await getOrderDetail(params).then((response) => {
                     console.log(response);
                     if (response.success) {
@@ -1087,9 +1094,10 @@
              *  确认订单，获取密码框的密码
              * @param orderId
              **/
-            confirmOrderClick(txId,txHex) {
+            confirmOrderClick(txId, txHash, txHex) {
                 this.txId = txId;
-                this.txHex = txHex;
+                this.txHash = txHash;
+                //this.txHex = txHex;
                 this.$refs.confirmOrderPassword.showPassword(true);
             },
             /**
@@ -1102,7 +1110,7 @@
                 if (newAddressInfo.address === this.accountAddress.address) {
                     // 组装交易数据上链 TODO
                     // 反序列化txHex,追加from、to，再次签名
-                    let tAssemble = Buffer.from(this.txHex, 'hex');
+                    //let tAssemble = Buffer.from(this.txHex, 'hex');
 
                     let fromAddress = this.address;
                     let toAddress = "tNULSeBaMjUnoMkTh9bSCYu1sGJM2vQZqGnvMK";
@@ -1142,33 +1150,40 @@
                     // } else {
                     //     txhex = await nuls.transactionSerialize(nuls.decrypteOfAES(this.addressInfo.aesPri, password), this.addressInfo.pub, tAssemble);
                     // }
+
+                    //let txHash="11111";
+                    // 通过后端反序列化交易hex
+                    let tAssemble = await nuls.transactionAssemble([], [], this.transferForm.remarks, 2)
+                    tAssemble.hash = Buffer.from(this.txHash, 'hex');
+                    console.log(tAssemble);
+
                     txhex = await nuls.transactionSerialize(nuls.decrypteOfAES(this.addressInfo.aesPri, password), this.addressInfo.pub, tAssemble);
                     console.log(txhex);
                     //验证并广播交易
-                    let txHash='123';
-                    await validateAndBroadcast(txhex).then((response) => {
-                        //console.log(response);
-                        //this.transferLoading = false;
-                        if (response.success) {
-                            //this.toUrl("txList");
-                            txHash = response.hash;
-                            console.log("txHash===="+txHash);
-                        } else {
-                            this.$message({
-                                message: this.$t('error.' + response.data.code),
-                                type: 'error',
-                                duration: 3000
-                            });
-                        }
-                    }).catch((err) => {
-                        //this.transferLoading = false;
-                        this.$message({message: this.$t('public.err1') + err, type: 'error', duration: 1000});
-                    });
+                    //let txHash='123';
+                    // await validateAndBroadcast(txhex).then((response) => {
+                    //     //console.log(response);
+                    //     //this.transferLoading = false;
+                    //     if (response.success) {
+                    //         //this.toUrl("txList");
+                    //         txHash = response.hash;
+                    //         console.log("txHash===="+txHash);
+                    //     } else {
+                    //         this.$message({
+                    //             message: this.$t('error.' + response.data.code),
+                    //             type: 'error',
+                    //             duration: 3000
+                    //         });
+                    //     }
+                    // }).catch((err) => {
+                    //     //this.transferLoading = false;
+                    //     this.$message({message: this.$t('public.err1') + err, type: 'error', duration: 1000});
+                    // });
 
                     // 确认订单提交
                     let params = {
                         "txId": this.txId,
-                        "txHash": txHash,
+                        "txHash": this.txHash,
                         "dataHex": txhex
                     };
                     await confirmOrder(params).then((response) => {
