@@ -70,13 +70,13 @@ export const copys = (value) => copy(value);
 /**
  * 数字除以精度系数
  */
-export function timesDecimals(nu, decimals = 8) {
+export function divDecimals(nu, decimals = 8) {
     let newNu = new BigNumber(Division(nu, Power(decimals)).toString());
     return newNu.toFormat().replace(/[,]/g, '');
 }
 
 /**
- * 数字除以精度系数
+ * 数字乘以精度系数
  */
 export function multiDecimals(nu, decimals = 8) {
     let newNu = new BigNumber(Times(nu, Power(decimals)).toString());

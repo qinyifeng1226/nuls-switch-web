@@ -223,6 +223,9 @@ const cn ={
   "orderInfo":{
     "price":"价格",
     "num":"数量",
+    "txNum":"交易数量",
+    "remainNum":"订单剩余数量",
+    "maxTxNum":"余额可交易量",
     "usable":"可用",
     "txType":"交易类型",
     "createTime":"时间",

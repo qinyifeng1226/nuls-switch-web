@@ -1,7 +1,7 @@
 import {post_nuls} from './https'
 import {post} from './https'
 import {get} from './https'
-import {Plus, chainID, timesDecimals} from './util'
+import {Plus, chainID, divDecimals} from './util'
 
 /**
  * 计算手续费
@@ -198,7 +198,7 @@ export async function getBalanceOrNonceByAddress(assetChainId = 2, assetId = 1, 
             if (response.hasOwnProperty("result")) {
                 let balance = response.result.balance;
                 if (divDecimals == 1) {
-                    balance = timesDecimals(balance);
+                    balance = divDecimals(balance);
                 }
                 return {success: true, data: {balance: balance, nonce: response.result.nonce}}
             } else {
@@ -331,7 +331,7 @@ export async function listOnSell(params) {
             if (response.hasOwnProperty("result")) {
                 return {success: true, data: response.result};
             } else {
-                return {success: false, data: response.error};
+                return {success: false, data: response.message};
             }
         })
         .catch((error) => {
@@ -350,7 +350,7 @@ export async function listOnBuy(params) {
             if (response.hasOwnProperty("result")) {
                 return {success: true, data: response.result};
             } else {
-                return {success: false, data: response.error};
+                return {success: false, data: response.message};
             }
         })
         .catch((error) => {
@@ -369,7 +369,7 @@ export async function queryMyCurrentOrder(params) {
             if (response.hasOwnProperty("result")) {
                 return {success: true, data: response.result};
             } else {
-                return {success: false, data: response.error};
+                return {success: false, data: response.message};
             }
         })
         .catch((error) => {
@@ -388,7 +388,7 @@ export async function queryMyHisOrder(params) {
             if (response.hasOwnProperty("result")) {
                 return {success: true, data: response.result};
             } else {
-                return {success: false, data: response.error};
+                return {success: false, data: response.message};
             }
         })
         .catch((error) => {
@@ -407,7 +407,7 @@ export async function getOrderDetail(params) {
             if (response.hasOwnProperty("result")) {
                 return {success: true, data: response.result};
             } else {
-                return {success: false, data: response.error};
+                return {success: false, data: response.message};
             }
         })
         .catch((error) => {
@@ -441,7 +441,7 @@ export async function createOrder(params) {
             if (response.hasOwnProperty("result")) {
                 return {success: true, data: response.result};
             } else {
-                return {success: false, data: response.error};
+                return {success: false, data: response.message};
             }
         })
         .catch((error) => {
@@ -460,7 +460,7 @@ export async function cancelOrder(params) {
             if (response.hasOwnProperty("result")) {
                 return {success: true, data: response.result};
             } else {
-                return {success: false, data: response.error};
+                return {success: false, data: response.message};
             }
         })
         .catch((error) => {
@@ -479,7 +479,7 @@ export async function tradingOrder(params) {
             if (response.hasOwnProperty("result")) {
                 return {success: true, data: response.result};
             } else {
-                return {success: false, data: response.error};
+                return {success: false, data: response.message};
             }
         })
         .catch((error) => {
@@ -498,7 +498,7 @@ export async function confirmOrder(params) {
             if (response.hasOwnProperty("result")) {
                 return {success: true, data: response.result};
             } else {
-                return {success: false, data: response.error};
+                return {success: false, data: response.message};
             }
         })
         .catch((error) => {

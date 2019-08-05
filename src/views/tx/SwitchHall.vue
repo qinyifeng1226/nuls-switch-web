@@ -84,14 +84,17 @@
                                   v-loading="buyListLoading">
                             <el-table-column label="" width="30">
                             </el-table-column>
-                            <el-table-column :label="$t('orderInfo.price')" width="170" align="left">
+                            <el-table-column :label="$t('orderInfo.price')" width="100" align="left">
                                 <template slot-scope="scope">{{ scope.row.price }}</template>
                             </el-table-column>
-                            <el-table-column :label="$t('orderInfo.num')" width="170" align="left">
-                                <template slot-scope="scope">{{ scope.row.totalNum }}</template>
+                            <el-table-column :label="$t('orderInfo.num')" width="150" align="left">
+                                <template slot-scope="scope">{{ scope.row.txNum }}/{{ scope.row.totalNum }}</template>
                             </el-table-column>
-                            <el-table-column :label="$t('switch.buy')" width="120" align="left">
-                                <template slot-scope="scope"><el-button type="primary" @click="buyBtnClick(scope.row.orderId,scope.row.price)">{{$t('switch.buy')}}</el-button></template>
+                            <el-table-column :label="$t('orderInfo.remainNum')" width="130" align="left">
+                                <template slot-scope="scope">{{ scope.row.remainNum }}</template>
+                            </el-table-column>
+                            <el-table-column :label="$t('switch.buy')" width="80" align="left">
+                                <template slot-scope="scope"><el-button type="primary" @click="buyBtnClick(scope.row.orderId,scope.row.price,scope.row.remainNum)">{{$t('switch.buy')}}</el-button></template>
                             </el-table-column>
                         </el-table>
                         <div class="paging">
@@ -109,14 +112,17 @@
                                   v-loading="sellListLoading">
                             <el-table-column label="" width="30">
                             </el-table-column>
-                            <el-table-column :label="$t('orderInfo.price')" width="170" align="left">
+                            <el-table-column :label="$t('orderInfo.price')" width="100" align="left">
                                 <template slot-scope="scope">{{ scope.row.price }}</template>
                             </el-table-column>
-                            <el-table-column :label="$t('orderInfo.num')" width="170" align="left">
-                                <template slot-scope="scope">{{ scope.row.totalNum }}</template>
+                            <el-table-column :label="$t('orderInfo.num')" width="150" align="left">
+                                <template slot-scope="scope">{{ scope.row.txNum }}/{{ scope.row.totalNum }}</template>
                             </el-table-column>
-                            <el-table-column :label="$t('switch.sell')" width="120" align="left">
-                                <template slot-scope="scope"><el-button type="primary" @click="sellBtnClick(scope.row.orderId,scope.row.price)">{{$t('switch.sell')}}</el-button></template>
+                            <el-table-column :label="$t('orderInfo.remainNum')" width="130" align="left">
+                                <template slot-scope="scope">{{ scope.row.remainNum }}</template>
+                            </el-table-column>
+                            <el-table-column :label="$t('switch.sell')" width="80" align="left">
+                                <template slot-scope="scope"><el-button type="primary" @click="sellBtnClick(scope.row.orderId,scope.row.price,scope.row.remainNum)">{{$t('switch.sell')}}</el-button></template>
                             </el-table-column>
                         </el-table>
                         <div class="paging">
@@ -184,21 +190,29 @@
         </div>
 
         <!-- 买入/卖出 -->
-        <el-dialog title="买入" :visible.sync="buyTokenVisible" top="30vh" width="20rem"
-                   class="password-dialog"
+        <el-dialog title="买入" :visible.sync="buyTokenVisible" top="30vh"
+                   class="trade-dialog"
                    :close-on-click-modal="false"
                    :close-on-press-escape="false"
+                   @submit.native.prevent
                    @close="buyTokenFormClose">
-<!--            :rules="buyTokendRules" @submit.native.prevent-->
-            <el-form ref="buyTokenForm" :model="buyTokenForm">
+            <el-form ref="buyTokenForm" :model="buyTokenForm" :rules="buyTokendRules">
                 <el-form-item prop="txNum">
                 </el-form-item>
-                <div class="buyToken">
-                    <el-row class="order_row">
-                        <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
-                        <div class="order_input">
+                <div class="tradeToken">
+                    <el-row class="trade_row">
+                        <div class="trade_label"><span>{{$t('orderInfo.num')}}：</span></div>
+                        <div class="trade_input">
                             <el-input type="input" v-model="buyTokenForm.txNum" :maxlength="10" placeholder="请输入数量"></el-input>
                         </div>
+                    </el-row>
+                    <el-row class="trade_row">
+                        <div class="trade_label"><span>{{$t('orderInfo.remainNum')}}：</span></div>
+                        <div class="trade_span"><span>{{buyTokenForm.remainNum}}</span></div>
+                    </el-row>
+                    <el-row class="trade_row">
+                        <div class="trade_label"><span>{{$t('orderInfo.maxTxNum')}}：</span></div>
+                        <div class="trade_span"><span>{{buyTokenForm.maxTxNum}}</span></div>
                     </el-row>
                 </div>
             </el-form>
@@ -208,21 +222,29 @@
                 </el-button>
             </div>
         </el-dialog>
-        <el-dialog title="卖出" :visible.sync="sellTokenVisible" top="30vh" width="20rem"
-                   class="password-dialog"
+        <el-dialog title="卖出" :visible.sync="sellTokenVisible" top="30vh"
+                   class="trade-dialog"
                    :close-on-click-modal="false"
                    :close-on-press-escape="false"
+                   @submit.native.prevent
                    @close="sellTokenFormClose">
-            <!--            :rules="buyTokendRules" @submit.native.prevent-->
-            <el-form ref="sellTokenForm" :model="sellTokenForm">
+            <el-form ref="sellTokenForm" :model="sellTokenForm" :rules="buyTokendRules">
                 <el-form-item prop="txNum">
                 </el-form-item>
-                <div class="buyToken">
-                    <el-row class="order_row">
-                        <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
-                        <div class="order_input">
+                <div class="tradeToken">
+                    <el-row class="trade_row">
+                        <div class="trade_label"><span>{{$t('orderInfo.num')}}：</span></div>
+                        <div class="trade_input">
                             <el-input type="input" v-model="sellTokenForm.txNum" :maxlength="10" placeholder="请输入数量"></el-input>
                         </div>
+                    </el-row>
+                    <el-row class="trade_row">
+                        <div class="trade_label"><span>{{$t('orderInfo.remainNum')}}：</span></div>
+                        <div class="trade_span"><span>{{buyTokenForm.remainNum}}</span></div>
+                    </el-row>
+                    <el-row class="trade_row">
+                        <div class="trade_label"><span>{{$t('orderInfo.maxTxNum')}}：</span></div>
+                        <div class="trade_span"><span>{{buyTokenForm.maxTxNum}}</span></div>
                     </el-row>
                 </div>
             </el-form>
@@ -235,7 +257,7 @@
 
         <!-- 订单交易详情列表 -->
         <el-dialog title="订单交易详情" :visible.sync="orderTradeVisible" top="30vh"
-                   class="order-trade-dialog"
+                   class="order-trade-detail-dialog"
                    :close-on-click-modal="false"
                    :close-on-press-escape="false"
                    @close="orderTradeFormClose">
@@ -256,7 +278,9 @@
                     <el-table-column :label="$t('orderInfo.status')" width="150" align="left">
                         <template slot-scope="scope">
                             <span v-if="scope.row.status==1"> 确认中 </span>
-                            <el-button type="primary" size="mini" @click="confirmOrderClick(scope.row.txId,scope.row.txHash,scope.row.txHex)" v-if="scope.row.status==0 && scope.row.status!=9">确认</el-button>
+                            <span v-if="scope.row.status==2"> 已确认 </span>
+                            <span v-if="scope.row.status==9"> 已取消 </span>
+                            <el-button type="primary" size="mini" @click="confirmOrderClick(scope.row.txId,scope.row.txHash,scope.row.txHex)" v-if="scope.row.status==0">确认</el-button>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -293,7 +317,7 @@
     import sdk from 'nuls-sdk-js/lib/api/sdk'
     import Password from '@/components/PasswordBar'
     import SelectTokenBar from '@/components/SelectTokenBar'
-    import {addressInfo, chainID, multiDecimals, Times, timesDecimals} from '@/api/util.js'
+    import {addressInfo, chainID, multiDecimals, Times, divDecimals, Division} from '@/api/util.js'
     import {
         createOrder,
         tradingOrder,
@@ -322,7 +346,7 @@
                     callback();
                 }
             };
-            let validateTxNum = (rule, value, callback) => {
+            let validateTotalNum = (rule, value, callback) => {
                 let re = /^\d+(?=\.{0,1}\d+$|$)/;
                 let res = /^\d{1,8}(\.\d{1,8})?$/;
                 if (!value) {
@@ -362,6 +386,20 @@
                         }
                     }, 200);
                     //callback();
+                }
+            };
+
+            let validateTxNum = (rule, value, callback) => {
+                let re = /^\d+(?=\.{0,1}\d+$|$)/;
+                let res = /^\d{1,8}(\.\d{1,8})?$/;
+                if (!value) {
+                    return callback(new Error(this.$t('switch.nullTxNum')));
+                } else if (!re.exec(value) || !res.exec(value)) {
+                    callback(new Error(this.$t('switch.mustNum')));
+                } else if (value < 0) {
+                    callback(new Error(this.$t('switch.txNumError')));
+                } else {
+                    callback();
                 }
             };
             // let validateGas = (rule, value, callback) => {
@@ -412,6 +450,11 @@
                     //gas: [{validator: validateGas, trigger: ['blur', 'change']}],
                     price: [{validator: validatePrice, trigger: 'blur'}],
                 }, //验证信息
+
+                buyTokendRules: {
+                    txNum: [{validator: validateTxNum, trigger: ['blur', 'change']}]
+                }, //验证信息
+
                 fee: 0.001, //手续费
                 feeSymbol: "NULS",//手续费显示单位
                 buyTokenOrderForm: {
@@ -425,10 +468,14 @@
                     totalAmount: ''
                 },
                 buyTokenForm: {
-                    txNum: ''
+                    txNum: '',
+                    remainNum: '',
+                    maxTxNum: ''
                 },
                 sellTokenForm: {
-                    txNum: ''
+                    txNum: '',
+                    remainNum: '',
+                    maxTxNum: ''
                 },
                 buyTokenVisible: false,
                 sellTokenVisible: false,
@@ -498,7 +545,7 @@
                         {validator: validatePrice, trigger: ['blur']},
                     ],
                     totalNum: [
-                        {validator: validateTxNum, trigger: ['blur']}
+                        {validator: validateTotalNum, trigger: ['blur']}
                     ]
                 },
                 sellTokenOrderRules:{
@@ -506,7 +553,7 @@
                         {validator: validatePrice, trigger: ['blur']},
                     ],
                     totalNum: [
-                        {validator: validateTxNum, trigger: ['blur']}
+                        {validator: validateTotalNum, trigger: ['blur']}
                     ]
                 }
             }
@@ -553,7 +600,7 @@
         },
         watch: {
             addressInfo(val, old) {
-                this.activeName = 'buyTab';
+                //this.activeName = 'buyTab';
                 if (val.address !== old.address && old.address) {
                     //this.transferForm.fromAddress = this.addressInfo.address;
                     this.getAssetsListByAddress(this.transferForm.fromAddress);
@@ -619,7 +666,7 @@
                                     symbol: item.symbol,
                                     chainId: item.chainId,
                                     assetId: item.assetId,
-                                    balance: timesDecimals(item.balance)
+                                    balance: divDecimals(item.balance)
                                 });
                                 chainId = item.chainId;
                             }
@@ -642,7 +689,7 @@
                                     type: 2,
                                     symbol: itme.tokenSymbol,
                                     chainId: chainId,
-                                    balance: timesDecimals(itme.balance, itme.decimals),
+                                    balance: divDecimals(itme.balance, itme.decimals),
                                     contractAddress: itme.contractAddress,
                                     decimals: itme.decimals
                                 })
@@ -667,7 +714,7 @@
                                     symbol: item.symbol,
                                     chainId: item.chainId,
                                     assetId: item.assetId,
-                                    balance: timesDecimals(item.balance)
+                                    balance: divDecimals(item.balance)
                                 })
                             }
                         }
@@ -793,25 +840,25 @@
                 //     .then((response) => {
                 //         //console.log(response);
                 //         if (response.hasOwnProperty("result")) {
-                //             response.result.totalBalance = timesDecimals(response.result.totalBalance, 8);
-                //             response.result.balances = timesDecimals(response.result.balance, 8);
+                //             response.result.totalBalance = divDecimals(response.result.totalBalance, 8);
+                //             response.result.balances = divDecimals(response.result.balance, 8);
                 //             response.result.totalLock = Plus(response.result.timeLock, response.result.consensusLock).toString();
-                //             response.result.totalLocks = timesDecimals(response.result.totalLock, 8);
-                //             response.result.timeLock = timesDecimals(response.result.timeLock, 8);
-                //             response.result.consensusLock = timesDecimals(response.result.consensusLock, 8);
-                //             response.result.totalIn = timesDecimals(response.result.totalIn, 8);
-                //             response.result.totalOut = timesDecimals(response.result.totalOut, 8);
+                //             response.result.totalLocks = divDecimals(response.result.totalLock, 8);
+                //             response.result.timeLock = divDecimals(response.result.timeLock, 8);
+                //             response.result.consensusLock = divDecimals(response.result.consensusLock, 8);
+                //             response.result.totalIn = divDecimals(response.result.totalIn, 8);
+                //             response.result.totalOut = divDecimals(response.result.totalOut, 8);
                 //
                 //             if (parseInt(response.result.balance) > 0) {
                 //                 this.addressNumber.push({
                 //                     location: this.$t('public.usablebalance'),
-                //                     value: parseInt(timesDecimals(response.result.balance, 8))
+                //                     value: parseInt(divDecimals(response.result.balance, 8))
                 //                 });
                 //             }
                 //             if (parseInt(response.result.totalLock) > 0) {
                 //                 this.addressNumber.push({
                 //                     location: this.$t('public.consensusLocking'),
-                //                     value: parseInt(timesDecimals(response.result.totalLock, 8))
+                //                     value: parseInt(divDecimals(response.result.totalLock, 8))
                 //                 });
                 //             }
                 //
@@ -845,18 +892,26 @@
             /**
              * 点击买入按钮，弹出购买框
              */
-            buyBtnClick(orderId, price) {
+            buyBtnClick(orderId, price, remainNum) {
                 this.orderId = orderId;
                 this.price = price;
+                this.buyTokenForm.remainNum = remainNum;
+                //let maxTxNum=divDecimals(Number(Division(multiDecimals(this.price, 8),multiDecimals(this.toBalanceInfo.balance, 8)).toString()),8);
+                //this.buyTokenForm.maxTxNum =maxTxNum;
+                this.buyTokenForm.maxTxNum = Number(Division(this.toBalanceInfo.balance, price).toString());
                 this.buyTokenVisible = true;
             },
 
             /**
              * 点击买出按钮，弹出卖出框
              */
-            sellBtnClick(orderId, price) {
+            sellBtnClick(orderId, price, remainNum) {
                 this.orderId = orderId;
                 this.price = price;
+                this.sellTokenForm.remainNum = remainNum;
+                //let maxTxNum=divDecimals(Number(Division(multiDecimals(this.price, 8),multiDecimals(this.fromBalanceInfo.balance, 8)).toString()),8);
+                //this.sellTokenForm.maxTxNum =maxTxNum;
+                this.sellTokenForm.maxTxNum = Number(Division(this.fromBalanceInfo.balance, price).toString());
                 this.sellTokenVisible = true;
             },
 
@@ -1073,9 +1128,9 @@
                     if (response.success) {
                         // 展示订单交易详情
                         for (let item of response.data.records) {
-                            //item.price = timesDecimals(item.price, 8);
-                            item.txNum = timesDecimals(item.txNum, 8);
-                            item.totalNum = timesDecimals(item.totalNum, 8);
+                            //item.price = divDecimals(item.price, 8);
+                            item.txNum = divDecimals(item.txNum, 8);
+                            item.totalNum = divDecimals(item.totalNum, 8);
                         }
                         this.tradeList = response.data.records;
                         this.tradeListPager.total = response.data.total;
@@ -1218,9 +1273,10 @@
                         if (response.hasOwnProperty("result")) {
                             for (let item of response.result.records) {
                                 //item.createTime = moment(getLocalTime(item.createTime)).format('YYYY-MM-DD HH:mm:ss');
-                                item.price = timesDecimals(item.price, 8);
-                                item.txNum = timesDecimals(item.txNum, 8);
-                                item.totalNum = timesDecimals(item.totalNum, 8);
+                                item.price = divDecimals(item.price, 8);
+                                item.remainNum = divDecimals(item.totalNum - item.txNum, 8);
+                                item.txNum = divDecimals(item.txNum, 8);
+                                item.totalNum = divDecimals(item.totalNum, 8);
                             }
                             this.buyList = response.result.records;
                             this.buyListPager.total = response.result.total;
@@ -1258,8 +1314,10 @@
                         if (response.hasOwnProperty("result")) {
                             for (let item of response.result.records) {
                                 //item.createTime = moment(getLocalTime(item.time)).format('YYYY-MM-DD HH:mm:ss');
-                                item.price = timesDecimals(item.price, 8);
-                                item.totalNum = timesDecimals(item.totalNum, 8);
+                                item.price = divDecimals(item.price, 8);
+                                item.remainNum = divDecimals(item.totalNum - item.txNum, 8);
+                                item.txNum = divDecimals(item.txNum, 8);
+                                item.totalNum = divDecimals(item.totalNum, 8);
                             }
                             this.sellList = response.result.records;
                             this.sellListPager.total = response.result.total;
@@ -1287,10 +1345,10 @@
                         if (response.hasOwnProperty("result")) {
                             for (let item of response.result.records) {
                                 //item.createTime = moment(getLocalTime(item.createTime)).format('YYYY-MM-DD HH:mm:ss');
-                                item.price = timesDecimals(item.price, 8);
-                                item.txNum = timesDecimals(item.txNum, 8);
-                                item.totalNum = timesDecimals(item.totalNum, 8);
-                                item.totalAmount = timesDecimals(item.totalAmount, 8);
+                                item.price = divDecimals(item.price, 8);
+                                item.txNum = divDecimals(item.txNum, 8);
+                                item.totalNum = divDecimals(item.totalNum, 8);
+                                item.totalAmount = divDecimals(item.totalAmount, 8);
                             }
                             this.depositList = response.result.records;
                             this.depositListPager.total = response.result.total;
@@ -1421,7 +1479,7 @@
                     padding-top: 15px;
 
                     .order_label {
-                        width: 60px;
+                        width: auto;
                         float: left;
                         display: inline;
                         padding: 10px 0 0 5px;
@@ -1499,31 +1557,31 @@
             }
         }
 
-        .buyToken {
-            .order_row {
-                padding-top: 15px;
+        /*.buyToken {*/
+        /*    .order_row {*/
+        /*        padding-top: 15px;*/
 
-                .order_label {
-                    width: 60px;
-                    float: left;
-                    display: inline;
-                    padding: 10px 0 0 5px;
-                }
+        /*        .order_label {*/
+        /*            width: auto;*/
+        /*            float: left;*/
+        /*            display: inline;*/
+        /*            padding: 10px 0 0 5px;*/
+        /*        }*/
 
-                .order_input {
-                    width: 200px;
-                    float: left;
-                    display: inline;
-                }
+        /*        .order_input {*/
+        /*            width: 200px;*/
+        /*            float: left;*/
+        /*            display: inline;*/
+        /*        }*/
 
-                .order_span {
-                    width: 60px;
-                    float: left;
-                    display: inline;
-                    padding: 10px 0 0 5px;
-                }
-            }
-        }
+        /*        .order_span {*/
+        /*            width: 60px;*/
+        /*            float: left;*/
+        /*            display: inline;*/
+        /*            padding: 10px 0 0 5px;*/
+        /*        }*/
+        /*    }*/
+        /*}*/
 
         .bottoms {
             margin: 0px auto 40px;
@@ -1539,7 +1597,7 @@
         }
     }
 
-    .order-trade-dialog {
+    .order-trade-detail-dialog {
         .el-dialog {
             width: 700px;
             .el-dialog__body {
@@ -1566,6 +1624,53 @@
                         span {
                             color: white;
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    .trade-dialog {
+        .el-dialog {
+            width: 400px;
+            .el-dialog__body {
+                background-color: #F5F6F9 !important;
+                padding: 10px 20px !important;
+                .el-form {
+                    .el-form-item {
+                        .el-form-item__label {
+                            line-height: 0;
+                            padding: 28px 0 20px 0;
+                        }
+                    }
+                }
+            }
+            .tradeToken {
+                .trade_row {
+                    padding-top: 15px;
+
+                    span {
+                        color: @Fcolour;
+                        font-size: 14px;
+                    }
+                    .trade_label {
+                        width: 105px;
+                        float: left;
+                        display: inline;
+                        padding: 10px 0 0 5px;
+                    }
+
+                    .trade_input {
+                        width: 180px;
+                        float: left;
+                        display: inline;
+                    }
+
+                    .trade_span {
+                        width: auto;
+                        float: left;
+                        display: inline;
+                        padding: 10px 0 0 5px;
                     }
                 }
             }
