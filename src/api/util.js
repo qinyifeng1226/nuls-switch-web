@@ -202,7 +202,6 @@ export function connect(name, parameter, type = 0) {
         //shell.openExternal(newUrl);
         window.open(name, '_blank');
     }
-
 }
 
 /**
@@ -223,4 +222,11 @@ export function getLocalTime(time) {
     }
     let localTime = utcTime + 3600000 * Math.abs(localUtc);
     return new Date(localTime);
+}
+/**
+ * 数字保留几位小数显示
+ */
+export function toFixed(num, decimals = 8) {
+    let newNu = Math.round(num * Power(decimals))/ Power(decimals);
+    return newNu;
 }
