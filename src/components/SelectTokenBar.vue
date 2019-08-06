@@ -19,6 +19,8 @@
         props: {},
         data() {
             return {
+                fromTokenInfo: {},
+                toTokenInfo: {},
                 fromTokenId: '',
                 fromTokenSymbol: '',
                 toTokenId: '',
@@ -37,27 +39,31 @@
                 //循环fromTokenOptions数组
                 for (let i = 0; i < this.fromTokenOptions.length; i++) {
                     //如果当前点击的数组value等于他自己当前v-model
-                    if (this.fromTokenOptions[i].tokenId == this.fromTokenId) {
+                    if (this.fromTokenOptions[i].tokenId === this.fromTokenId) {
+                        this.fromTokenInfo = this.fromTokenOptions[i];
                         this.fromTokenSymbol = this.fromTokenOptions[i].tokenSymbol;
                         //就把数组label绑定le2list
                         this.toTokenOptions = this.fromTokenOptions[i].switchTokenList;
                         if (this.toTokenOptions.length > 0) {
+                            this.toTokenInfo = this.toTokenOptions[0];
                             this.toTokenId = this.toTokenOptions[0].tokenId;
                             this.toTokenSymbol = this.toTokenOptions[0].tokenSymbol;
                         } else {
                             this.toTokenId = '';
+                            this.toTokenInfo = {};
                         }
                     }
                 }
-                this.$emit('change', this.fromTokenId, this.toTokenId, this.fromTokenSymbol, this.toTokenSymbol);
+                this.$emit('change', this.fromTokenInfo, this.toTokenInfo, this.fromTokenId, this.toTokenId, this.fromTokenSymbol, this.toTokenSymbol);
             },
             changeToTokenType() {
                 let obj = {};
                 obj = this.toTokenOptions.find((item) => {
                     return item.tokenId === this.toTokenId;
                 });
+                this.toTokenInfo = obj;
                 this.toTokenSymbol = obj.tokenSymbol;
-                this.$emit('change', this.fromTokenId, this.toTokenId, this.fromTokenSymbol, this.toTokenSymbol);
+                this.$emit('change', this.fromTokenInfo, this.toTokenInfo, this.fromTokenId, this.toTokenId, this.fromTokenSymbol, this.toTokenSymbol);
             },
             /**
              * 获取所有支持兑换代币列表
@@ -68,15 +74,17 @@
                         if (response.hasOwnProperty("result")) {
                             this.fromTokenOptions = response.result;
                             if (this.fromTokenOptions.length > 0) {
+                                this.fromTokenInfo = this.fromTokenOptions[0];
                                 this.fromTokenId = this.fromTokenOptions[0].tokenId;
                                 this.fromTokenSymbol = this.fromTokenOptions[0].tokenSymbol;
                                 this.toTokenOptions = this.fromTokenOptions[0].switchTokenList;
                                 if (this.toTokenOptions.length > 0) {
+                                    this.toTokenInfo = this.toTokenOptions[0];
                                     this.toTokenId = this.toTokenOptions[0].tokenId;
                                     this.toTokenSymbol = this.toTokenOptions[0].tokenSymbol;
                                 }
                             }
-                            this.$emit('change', this.fromTokenId, this.toTokenId, this.fromTokenSymbol, this.toTokenSymbol);
+                            this.$emit('change', this.fromTokenInfo, this.toTokenInfo, this.fromTokenId, this.toTokenId, this.fromTokenSymbol, this.toTokenSymbol);
                         }
                     }).catch((error) => {
                     console.log(error)

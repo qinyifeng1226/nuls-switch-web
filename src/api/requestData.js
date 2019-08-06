@@ -133,25 +133,25 @@ export async function inputsOrOutputs(transferInfo, balanceInfo) {
         nonce: newNonce
     }];
 
-    if (transferInfo.assetsChainId !== chainID()) {
-        inputs[0].amount = transferInfo.amount;
-        //账户转出资产余额
-        let nulsbalance = await getBalanceOrNonceByAddress(chainID(), transferInfo.assetsId, transferInfo.fromAddress);
-        if (nulsbalance.data.balance < 100000) {
-            console.log("余额小于手续费");
-            return
-        }
-        inputs.push({
-            address: transferInfo.fromAddress,
-            assetsChainId: chainID(),
-            assetsId: transferInfo.assetsId,
-            amount: 100000,
-            locked: newLocked,
-            nonce: nulsbalance.data.nonce
-        })
-    }
-    let outputs = [];
-    outputs = [{
+    // 跨链转账时，才需要根据不同资产收取NULS手续费
+    // if (transferInfo.assetsChainId !== chainID()) {
+    //     inputs[0].amount = transferInfo.amount;
+    //     //账户转出资产余额
+    //     let nulsbalance = await getBalanceOrNonceByAddress(chainID(), transferInfo.assetsId, transferInfo.fromAddress);
+    //     if (nulsbalance.data.balance < 100000) {
+    //         console.log("余额小于手续费");
+    //         return
+    //     }
+    //     inputs.push({
+    //         address: transferInfo.fromAddress,
+    //         assetsChainId: chainID(),
+    //         assetsId: transferInfo.assetsId,
+    //         amount: 100000,
+    //         locked: newLocked,
+    //         nonce: nulsbalance.data.nonce
+    //     })
+    // }
+    let outputs = [{
         address: transferInfo.toAddress ? transferInfo.toAddress : transferInfo.fromAddress,
         assetsChainId: transferInfo.assetsChainId,
         assetsId: transferInfo.assetsId,
@@ -191,13 +191,13 @@ export async function getAddressInfoByAddress(address) {
  * @param divDecimals 是否去除默认精度
  * @returns {Promise<any>}
  */
-export async function getBalanceOrNonceByAddress(assetChainId = 2, assetId = 1, address, divDecimals = 0) {
+export async function getBalanceOrNonceByAddress(assetChainId = 2, assetId = 1, address, divisionDecimals = 0) {
     return await post_nuls('/', 'getAccountBalance', [assetChainId, assetId, address])
         .then((response) => {
             //console.log(response);
             if (response.hasOwnProperty("result")) {
                 let balance = response.result.balance;
-                if (divDecimals == 1) {
+                if (divisionDecimals === 1) {
                     balance = divDecimals(balance);
                 }
                 return {success: true, data: {balance: balance, nonce: response.result.nonce}}
