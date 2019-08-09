@@ -123,7 +123,10 @@ export async function inputsOrOutputs(transferInfo, balanceInfo) {
     if (balanceInfo.balance < newAmount) {
         return {success: false, data: "Your balance is not enough."}
     }
-
+    if(!newNonce)
+    {
+        newNonce="ffffffffffffffff";
+    }
     let inputs = [{
         address: transferInfo.fromAddress,
         assetsChainId: transferInfo.assetsChainId,

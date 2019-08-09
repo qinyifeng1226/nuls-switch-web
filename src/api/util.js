@@ -1,6 +1,8 @@
 import {BigNumber} from 'bignumber.js'
 import copy from 'copy-to-clipboard'
 import {API_CHAIN_ID} from './../config'
+import buffer from 'nuls-sdk-js/lib/utils/buffer';
+import txs from 'nuls-sdk-js/src/model/txs';
 
 /**
  * 10的N 次方
@@ -223,10 +225,80 @@ export function getLocalTime(time) {
     let localTime = utcTime + 3600000 * Math.abs(localUtc);
     return new Date(localTime);
 }
+
 /**
  * 数字保留几位小数显示
  */
 export function toFixed(num, decimals = 8) {
-    let newNu = Math.round(num * Power(decimals))/ Power(decimals);
+    let newNu = Math.round(num * Power(decimals)) / Power(decimals);
     return newNu;
 }
+
+/**
+ * 交易反序列化
+ * @param txHex
+ */
+export function deserializeTx(txHex) {
+    //转为字节
+    let txBuffer = buffer.hexToBuffer(txHex);
+    let transaction = new txs.TransferTransaction();
+    //读取位置
+    let offset = 0;
+    //读取type
+    transaction.type = txBuffer.readInt16LE(offset);
+    offset += 2;
+    //交易时间
+    transaction.time = txBuffer.readInt32LE(offset);
+    offset += 4;
+    let varInt = new VarInt();
+    varInt.parse(txBuffer, offset);
+    //备注
+    if (varInt.value == 0) {
+        transaction.remark = null;
+    }
+    offset += varInt.originallyEncodedSize;
+    //交易数据
+    varInt.parse(txBuffer, offset);
+    offset += varInt.originallyEncodedSize;
+    transaction.txData = txBuffer.slice(offset, varInt.value);
+    offset += varInt.value;
+    //coinData数据
+    varInt.parse(txBuffer, offset);
+    offset += varInt.originallyEncodedSize;
+    transaction.coinData = txBuffer.slice(offset, offset + varInt.value);
+    //签名数据
+    offset += varInt.value;
+    varInt.parse(txBuffer, offset);
+    offset += varInt.originallyEncodedSize;
+    transaction.signatures = txBuffer.slice(offset, offset + varInt.value);
+    return transaction;
+}
+
+/**
+ * 读取交易数据
+ * @constructor
+ */
+let VarInt = function () {
+    this.value = null;
+    this.originallyEncodedSize = 0;
+    this.parse = function (buf, offset) {
+        let first = 0xFF & buf[offset];
+        if (first < 253) {
+            this.value = first;
+            // 1 entity byte (8 bits)
+            this.originallyEncodedSize = 1;
+        } else if (first == 253) {
+            this.value = (0xFF & buf[offset + 1]) | ((0xFF & buf[offset + 2]) << 8);
+            // 1 marker + 2 entity bytes (16 bits)
+            this.originallyEncodedSize = 3;
+        } else if (first == 254) {
+            this.value = buf.readUInt32LE(offset + 1);
+            // 1 marker + 4 entity bytes (32 bits)
+            this.originallyEncodedSize = 5;
+        } else {
+            this.value = buf.readBigInt64LE(offset + 1);
+            // 1 marker + 8 entity bytes (64 bits)
+            this.originallyEncodedSize = 9;
+        }
+    };
+};

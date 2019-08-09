@@ -5,8 +5,8 @@ var nuls2 = require('nuls-sdk-js/lib');
 var Serializers = require("nuls-sdk-js/lib/api/serializers");
 var newAddressInfo = nuls2.newAddress(2, "123456");
 var pri = nuls.decrypteOfAES(newAddressInfo.aesPri, "123456");
-console.log(pri)
-console.log(newAddressInfo['pub'])
+//console.log(pri)
+//console.log(newAddressInfo['pub'])
 // var digest = nuls.signature("616466616466616466",pri)
 // console.log(digest)
 
@@ -122,17 +122,13 @@ transaction.signatures = test.slice(offset, offset + varInt.value);
 
 //追加签名
 let bw = new Serializers();
-bw.writeBytesWithLength(transaction.signatures);
+bw.getBufWriter().write(transaction.signatures);
 let transactionSignature = nuls_sdk_js_lib.transactionSignature(pri, transaction);
 bw.writeBytesWithLength(buffer.hexToBuffer(newAddressInfo['pub']));
 bw.writeBytesWithLength(transactionSignature);
 transaction.signatures = bw.getBufWriter().toBuffer();
 let transactionHex = transaction.txSerialize().toString('hex');
 console.log(transactionHex)
-
-
-
-
 
 
 

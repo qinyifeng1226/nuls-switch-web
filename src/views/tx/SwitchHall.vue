@@ -314,10 +314,12 @@
 
 <script>
     import nuls from 'nuls-sdk-js'
+    import Serializers from 'nuls-sdk-js/lib/api/serializers'
+    import buffer from 'nuls-sdk-js/lib/utils/buffer'
     import sdk from 'nuls-sdk-js/lib/api/sdk'
     import Password from '@/components/PasswordBar'
     import SelectTokenBar from '@/components/SelectTokenBar'
-    import {addressInfo, chainID, multiDecimals, Times, divDecimals, Division, toFixed} from '@/api/util.js'
+    import {addressInfo, chainID, multiDecimals, Times, divDecimals, Division, toFixed, deserializeTx} from '@/api/util.js'
     import {
         createOrder,
         tradingOrder,
@@ -326,7 +328,6 @@
         getOrderDetail,
         getBalanceOrNonceByAddress,
         inputsOrOutputs,
-        countFee,
         validateAndBroadcast
     } from '@/api/requestData'
     //import moment from 'moment'
@@ -522,12 +523,14 @@
         mounted() {
             //定时获取余额
             this.balanceInterval = setInterval(() => {
-                // balanceInfo
-                this.getBalanceOrNonce(0, 2, 1, this.accountAddress.address);
-                // fromBalanceInfo
-                this.getBalanceOrNonce(1, 2, 1, this.accountAddress.address, 1);
-                // toBalanceInfo
-                this.getBalanceOrNonce(2, 2, 1, this.accountAddress.address, 1);
+                if (this.accountAddress != null) {
+                    // balanceInfo
+                    this.getBalanceOrNonce(0, 2, 1, this.accountAddress.address);
+                    // fromBalanceInfo
+                    this.getBalanceOrNonce(1, 2, 1, this.accountAddress.address, 1);
+                    // toBalanceInfo
+                    this.getBalanceOrNonce(2, 2, 1, this.accountAddress.address, 1);
+                }
             }, 60000);
         },
         watch: {
@@ -1030,11 +1033,7 @@
              * @param orderId
              **/
             confirmOrderClick(tradeInfo) {
-                //tradeInfo.status = 1;
                 this.tradeInfo = tradeInfo;
-                //this.txId = txId;
-                //this.txHash = txHash;
-                //this.txHex = txHex;
                 this.$refs.confirmOrderPassword.showPassword(true);
             },
             /**
@@ -1045,78 +1044,54 @@
                 const pri = nuls.decrypteOfAES(this.accountAddress.aesPri, password);
                 const newAddressInfo = nuls.importByKey(chainID(), pri, password);
                 if (newAddressInfo.address === this.accountAddress.address) {
-                    // 组装交易数据上链 TODO
-                    // 反序列化txHex,追加from、to，再次签名
-                    //let tAssemble = Buffer.from(this.txHex, 'hex');
+                    // 反序列化txHex,追加from、to,再次签名,组装交易数据上链
+                    let newTx = deserializeTx(this.tradeInfo.txHex);
+                    //追加签名
+                    let sign = new Serializers();
+                    sign.getBufWriter().write(newTx.signatures);
+                    //新签名
+                    let newSignature = nuls.transactionSignature(pri, newTx);
+                    sign.writeBytesWithLength(buffer.hexToBuffer(newAddressInfo['pub']));
+                    sign.writeBytesWithLength(newSignature);
+                    newTx.signatures = sign.getBufWriter().toBuffer();
+                    let txhex = newTx.txSerialize().toString('hex');
+                    console.log(txhex)
 
-                    // let fromAddress = this.address;
-                    // let toAddress = "tNULSeBaMjUnoMkTh9bSCYu1sGJM2vQZqGnvMK";
-                    // let assetsChainId = 2; // NULS链
-                    // let assetsId = 1;
-                    // let transferInfo = {
-                    //     fromAddress: fromAddress,
-                    //     toAddress: toAddress,
-                    //     assetsChainId: assetsChainId,
-                    //     assetsId: assetsId,
-                    //     fee: 100000
-                    // };
-                    // let inOrOutputs = {};
-                    // //let tAssemble = [];
-                    // let amount=20;//20-NULS
-                    // //let amountB = 10;//10-USDT
-                    // //transferInfoA['amount'] = Number(Times(amountA, 100000000).toString());
-                    // transferInfo['amount'] = Number(Times(amount, 100000000).toString());
-                    // inOrOutputs = await inputsOrOutputs(transferInfo, this.balanceInfo);
-                    //let inOrOutputsNew = {...tx., ...addressInfo.data};
-
-                    // 通过后端反序列化交易hex
-                    let tAssemble = await nuls.transactionAssemble([], [], '', 2)
-                    tAssemble.hash = Buffer.from(this.tradeInfo.txHash, 'hex');
-                    console.log(tAssemble);
-                    //交易组装，把新的签名追加到之前的交易签名中 TODO
-
-                    //交易签名
-                    let txhex = await nuls.transactionSerialize(nuls.decrypteOfAES(this.addressInfo.aesPri, password), this.addressInfo.pub, tAssemble);
-                    console.log(txhex);
                     //验证并广播交易
-                    //let txHash='123';
-                    // await validateAndBroadcast(txhex).then((response) => {
-                    //     //console.log(response);
-                    //     //this.transferLoading = false;
-                    //     if (response.success) {
-                    //         //this.toUrl("txList");
-                    //         txHash = response.hash;
-                    //         console.log("txHash===="+txHash);
-                    //     } else {
-                    //         this.$message({
-                    //             message: this.$t('error.' + response.data.code),
-                    //             type: 'error',
-                    //             duration: 3000
-                    //         });
-                    //     }
-                    // }).catch((err) => {
-                    //     //this.transferLoading = false;
-                    //     this.$message({message: this.$t('public.err1') + err, type: 'error', duration: 1000});
-                    // });
-
-                    // 确认订单提交
-                    let params = {
-                        "txId": this.tradeInfo.txId,
-                        "txHash": this.tradeInfo.txHash,
-                        "dataHex": txhex
-                    };
-                    await confirmOrder(params).then((response) => {
+                    let txHash;
+                    await validateAndBroadcast(txhex).then((response) => {
                         console.log(response);
                         if (response.success) {
-                            this.orderId = '';
-                            this.tradeInfo.status = 1;
-                            this.$message({message: this.$t('switch.confirmOrderSuccess'), type: 'success', duration: 2000});
+                            //this.toUrl("txList");
+                            txHash = response.hash;
+                            console.log("txHash====" + txHash);
                         } else {
-                            this.$message({message: this.$t('switch.confirmOrderError') + ": " +  response.data, type: 'error', duration: 3000});
+                            this.$message({message: this.$t('error.' + response.data.code), type: 'error', duration: 3000});
                         }
                     }).catch((err) => {
-                        this.$message({message: this.$t('switch.confirmOrderError') + ": " +  err, type: 'error', duration: 3000});
+                        this.$message({message: this.$t('public.err1') + err, type: 'error', duration: 1000});
                     });
+
+                    if (txHash != null) {
+                        // 确认订单提交
+                        let params = {
+                            "txId": this.tradeInfo.txId,
+                            "txHash": txHash,
+                            "dataHex": txhex
+                        };
+                        await confirmOrder(params).then((response) => {
+                            console.log(response);
+                            if (response.success) {
+                                this.orderId = '';
+                                this.tradeInfo.status = 1;
+                                this.$message({message: this.$t('switch.confirmOrderSuccess'), type: 'success', duration: 2000});
+                            } else {
+                                this.$message({message: this.$t('switch.confirmOrderError') + ": " +  response.data, type: 'error', duration: 3000});
+                            }
+                        }).catch((err) => {
+                            this.$message({message: this.$t('switch.confirmOrderError') + ": " +  err, type: 'error', duration: 3000});
+                        });
+                    }
                 }else {
                     this.$message({message: this.$t('public.errorPwd'), type: 'error', duration: 1000});
                 }
