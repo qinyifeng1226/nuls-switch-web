@@ -1,145 +1,375 @@
 <template>
-  <div class="new-address bg-gray">
-    <div class="bg-white">
-      <h3 class="title">欢迎来到NULS,我们一起让区块链世界变得更简单</h3>
-    </div>
-    <div class="tab bg-white w1200 mt_30">
-      <div class="tips bg-gray w630">
-        <p class="font14"><i></i>请设置密码用以导入账户、转账、参与共识等重要行为验证</p>
-        <p class="font14"><i></i>请认真保存钱包密码，NULS钱包不存储密码，也无法帮您找回，请务必牢记</p>
-      </div>
-
-      <el-form :model="newAddressForm" status-icon :rules="newAddressRules" ref="newAddressForm" class="pass-form w630">
-        <el-form-item label="密码" prop="pass">
-          <el-input type="password" v-model="newAddressForm.pass" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item label="确认密码" prop="checkPass">
-          <el-input type="password" v-model="newAddressForm.checkPass" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item class="form-bnt">
-          <el-button type="success" @click="submitForm('newAddressForm')">创建账户</el-button>
-          <el-button type="text" @click="toUrl('importAddress')">导入账户</el-button>
-        </el-form-item>
-      </el-form>
-
-    </div>
+  <div class="home">
+    <h3 class="title" v-if="addressInfo">
+      {{addressInfo.address}}
+      <span v-show="addressInfo.alias"> | {{addressInfo.alias}}</span>
+      <i class="iconfont iconfuzhi clicks" @click="copy(addressInfo.address)"></i>
+    </h3>
+    <el-tabs v-model="homeActive" @tab-click="handleClick" class="w1200">
+      <el-tab-pane :label="$t('home.home0')" name="homeFirst" v-loading="assetsListLoading">
+        <el-select v-model="assetsValue" @change="channgeAsesets">
+          <el-option v-for="item in assetsOptions" :key="item.value" :label="$t('assetsType.'+item.value)"
+                     :value="item.value">
+          </el-option>
+        </el-select>
+        <el-table :data="addressAssetsData" stripe border>
+          <el-table-column prop="account" :label="$t('tab.tab0')" align="center">
+          </el-table-column>
+          <el-table-column :label="$t('tab.tab1')" align="center" width="150">
+            <template slot-scope="scope"><span>{{ $t('assetsType.'+scope.row.type) }}</span></template>
+          </el-table-column>
+          <el-table-column prop="balance" :label="$t('tab.tab4')">
+          </el-table-column>
+          <el-table-column :label="$t('tab.tab3')">
+            <template slot-scope="scope">
+              <span class="click" @click="toUrl('frozenList',scope.row)"
+                    v-show="scope.row.locking !== '--' && scope.row.locking !==0 ">{{scope.row.locking}}</span>
+              <span v-show="scope.row.locking === '--' || scope.row.locking ===0">{{scope.row.locking}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="total" :label="$t('tab.tab2')">
+          </el-table-column>
+          <el-table-column fixed="right" :label="$t('public.operation')" align="center" min-width="120">
+            <template slot-scope="scope">
+              <label class="click tab_bn" @click="toUrl('transfer',scope.row.account)">{{$t('nav.transfer')}}</label>
+              <span class="tab_line">|</span>
+              <label class="click tab_bn" @click="toUrl('txList',scope.row)">{{$t('home.home2')}}</label>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div class="pages">
+          <div class="page-total">
+            {{$t('public.display')}} {{pageNumber-1 === 0 ? 1 : (pageNumber-1) *pageSize}}-{{pageNumber*pageSize}}
+            {{$t('public.total')}} {{addressAssetsData.length}}
+          </div>
+          <el-pagination v-show="addressAssetsData.length > pageSize" class="fr" background
+                         @current-change="addressAssetsListPages"
+                         layout=" prev, pager, next, jumper"
+                         :total="addressAssetsData.length">
+          </el-pagination>
+        </div>
+      </el-tab-pane>
+      <el-tab-pane :label="$t('home.home1')" name="homeSecond">
+        <el-table :data="crossLinkData" stripe border v-loading="crossLinkDataLoading">
+          <el-table-column prop="symbol" :label="$t('tab.tab0')" align="center">
+          </el-table-column>
+          <!--  <el-table-column :label="$t('tab.tab1')" align="center" width="150">
+              <template slot-scope="scope"><span>{{ scope.row.symbol }}</span></template>
+            </el-table-column>-->
+          <el-table-column prop="balance" :label="$t('tab.tab4')">
+          </el-table-column>
+          <el-table-column :label="$t('tab.tab3')">
+            <template slot-scope="scope">
+              <span class="click" @click="toUrl('frozenList',scope.row)"
+                    v-show="scope.row.locking !== '--' && scope.row.locking !==0 ">{{scope.row.locking}}</span>
+              <span v-show="scope.row.locking === '--' || scope.row.locking ===0">{{scope.row.locking}}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="totalBalance" :label="$t('tab.tab2')">
+          </el-table-column>
+          <el-table-column fixed="right" :label="$t('public.operation')" align="center" min-width="120">
+            <template slot-scope="scope">
+              <label class="click tab_bn" @click="toUrl('transfer',scope.row.symbol)">{{$t('nav.transfer')}}</label>
+              <span class="tab_line">|</span>
+              <label class="click tab_bn" @click="toUrl('txList',scope.row)">{{$t('home.home2')}}</label>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div class="pages">
+          <div class="page-total">
+            {{$t('public.display')}} {{pageNumber-1 === 0 ? 1 : (pageNumber-1) *pageSize}}-{{pageNumber*pageSize}}
+            {{$t('public.total')}} {{crossLinkData.length}}
+          </div>
+          <el-pagination v-show="addressAssetsData.length > pageSize" class="fr" background
+                         @current-change="addressAssetsListPages"
+                         layout=" prev, pager, next, jumper"
+                         :total="addressAssetsData.length">
+          </el-pagination>
+        </div>
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
 
 <script>
-  import nuls from 'nuls-sdk-js'
-  import {API_CHAIN_ID} from '@/config'
-  import {chainIdNumber} from '@/api/util'
-  import {getAddressInfoByAddress} from '@/api/requestData'
+  import {timesDecimals, copys, addressInfo} from '@/api/util'
 
   export default {
+    name: 'home',
     data() {
-      let validatePass = (rule, value, callback) => {
-        if (value === '') {
-          callback(new Error('请输入密码'));
-        } else {
-          if (this.newAddressForm.checkPass !== '') {
-            this.$refs.newAddressForm.validateField('checkPass');
-          }
-          callback();
-        }
-      };
-      let validateCheckPass = (rule, value, callback) => {
-        if (value === '') {
-          callback(new Error('请再次输入密码'));
-        } else if (value !== this.newAddressForm.pass) {
-          callback(new Error('两次输入密码不一致!'));
-        } else {
-          callback();
-        }
-      };
       return {
-        newAddressForm: {
-          pass: '',
-          checkPass: '',
-        },
-        newAddressRules: {
-          pass: [
-            {validator: validatePass, trigger: 'blur'}
-          ],
-          checkPass: [
-            {validator: validateCheckPass, trigger: 'blur'}
-          ]
-        },
-        newAddressInfo: {},//创建地址信息
+        homeActive: 'homeFirst',   //tab默认选中
+        addressInfo: {},//默认账户信息
+        addressAssetsData: [],//账户资产列表
+        assetsListLoading: true,//账户资产列表加载动画
+        //资产类型
+        assetsOptions: [
+          {value: '0', label: '0'},
+          {value: '1', label: '1'},
+          {value: '2', label: '2'}
+        ],
+        assetsValue: "0",
+        txListDataLoading: true,  //资产加载动画
+        txListData: [], //交易数据
+        pageNumber: 1, //页码
+        pageSize: 10,//条数
+        pageCount: 0, //总条数
+        crossLinkData: [],//跨链资产
+        crossLinkDataLoading: true, //资产加载动画
       };
+    },
+    components: {},
+    created() {
+      this.addressInfo = addressInfo(1);
+      setInterval(() => {
+        this.addressInfo = addressInfo(1);
+      }, 500);
+
+      //判断是否有账户
+      if (this.addressInfo) {
+        this.getAddressInfoByNode(this.addressInfo.address);
+        setTimeout(() => {
+          this.getTokenListByAddress(this.pageNumber, this.pageSize, this.addressInfo.address)
+        }, 200);
+      } else {
+        this.$router.push({
+          name: "newAddress",
+          query: {'address': ''}
+        })
+      }
+
+    },
+    mounted() {
+    },
+    watch: {
+      addressInfo(val, old) {
+        if (val) {
+          if (val.address !== old.address && old.address) {
+            if (this.homeActive === 'homeFirst') {
+              this.getAddressInfoByNode(this.addressInfo.address);
+              setTimeout(() => {
+                this.getTokenListByAddress(this.pageNumber, this.pageSize, this.addressInfo.address);
+              }, 200);
+            } else {
+              this.pageNumber = 1;
+              this.pageSize = 10;
+              this.pageCount = 0;
+              this.getAccountCrossLedgerList(this.addressInfo.address);
+            }
+          }
+        }
+
+      }
     },
     methods: {
 
       /**
-       *  创建账户提交
-       * @param formName
+       * tab 切换
+       * @param tab
        **/
-      async submitForm(formName) {
-        this.$refs[formName].validate((valid) => {
-          if (valid) {
-            this.newAddressInfo = nuls.newAddress(API_CHAIN_ID, this.newAddressForm.pass);
-            this.getAddressInfoByAddress(this.newAddressInfo.address);
-          } else {
-            return false;
-          }
-        });
-      },
-
-      //获取账户信息根据创建的地址
-      async getAddressInfoByAddress(address) {
-        let addressInfo = await getAddressInfoByAddress(address);
-        let newAdressInfo = {...this.newAddressInfo, ...addressInfo.data};
-        if (addressInfo.success) {
-          localStorage.setItem(chainIdNumber(), JSON.stringify(newAdressInfo));
-          this.$router.push({
-            name: 'home'
-          });
+      handleClick(tab) {
+        if (tab.name === 'homeSecond') {
+          this.pageNumber = 1;
+          this.pageSize = 10;
+          this.pageCount = 0;
+          this.getAccountCrossLedgerList(this.addressInfo.address)
         } else {
-          this.$message({message: "创建地址错误: " + addressInfo.data.error.message, type: 'error', duration: 2000});
+          this.getAddressInfoByNode(this.addressInfo.address);
+          setTimeout(() => {
+            this.getTokenListByAddress(this.pageNumber, this.pageSize, this.addressInfo.address)
+          }, 200);
         }
       },
+
+      /**
+       * 资产下拉框选择
+       * * @param e
+       **/
+      channgeAsesets(e) {
+        this.assetsListLoading = true;
+        if (e.toString() === "1") {
+          this.getAddressInfoByNode(this.addressInfo.address);
+        } else if (e.toString() === "2") {
+          this.addressAssetsData = [];
+          setTimeout(() => {
+            this.getTokenListByAddress(this.pageNumber, this.pageSize, this.addressInfo.address)
+          }, 200);
+        } else {
+          this.getAddressInfoByNode(this.addressInfo.address);
+          setTimeout(() => {
+            this.getTokenListByAddress(this.pageNumber, this.pageSize, this.addressInfo.address)
+          }, 200);
+        }
+      },
+
+      /**
+       * 获取地址基本资产信息
+       * @param address
+       **/
+      getAddressInfoByNode(address) {
+        this.$post('/', 'getAccountLedgerList', [address], 'Home')
+                .then((response) => {
+                  //console.log(response);
+                  this.addressAssetsData = [];
+                  let newAssetsList = {};
+                  if (response.hasOwnProperty("result")) {
+                    newAssetsList.account = response.result[0].symbol;
+                    newAssetsList.chainId = response.result[0].chainId;
+                    newAssetsList.assetId = response.result[0].assetId;
+                    newAssetsList.type = 1;
+                    newAssetsList.total = timesDecimals(response.result[0].totalBalance);
+                    newAssetsList.locking = timesDecimals(response.result[0].consensusLock + response.result[0].timeLock);
+                    newAssetsList.balance = timesDecimals(response.result[0].balance);
+                  } else {
+                    newAssetsList.account = response.result.symbol;
+                    newAssetsList.chainId = response.result.chainId;
+                    newAssetsList.assetId = response.result.assetId;
+                    newAssetsList.type = 1;
+                    newAssetsList.total = 0;
+                    newAssetsList.locking = 0;
+                    newAssetsList.balance = 0;
+                  }
+                  this.addressInfo.balance = newAssetsList.balance;
+                  this.addressAssetsData.push(newAssetsList);
+                  this.assetsListLoading = false;
+                })
+      },
+
+      /**
+       * 获取地址代币资产信息
+       * @param pageSize
+       * @param pageRows
+       * @param address
+       **/
+      getTokenListByAddress(pageSize, pageRows, address) {
+        this.$post('/', 'getAccountTokens', [pageSize, pageRows, address], 'Home')
+                .then((response) => {
+                  //console.log(response);
+                  let newAssetsList = {};
+                  if (response.hasOwnProperty("result")) {
+                    for (let itme of response.result.list) {
+                      itme.account = itme.tokenSymbol;
+                      itme.type = 2;
+                      itme.total = timesDecimals(itme.balance, itme.decimals);
+                      itme.locking = '--';
+                      itme.balance = timesDecimals(itme.balance, itme.decimals);
+                    }
+                    newAssetsList = response.result.list;
+                  }
+                  this.addressAssetsData.push(...newAssetsList);
+                  this.addressInfo.tokens = [];
+                  this.addressInfo.tokens = this.addressAssetsData;
+                  //localStorage.setItem(this.addressInfo.address, JSON.stringify(this.addressInfo));
+                  this.assetsListLoading = false;
+                })
+      },
+
+      /**
+       * 获取地址跨链资产信息
+       * @param address
+       **/
+      getAccountCrossLedgerList(address) {
+        //this.txListDataLoading = true;
+        this.$post('/', 'getAccountCrossLedgerList', [address], 'Home')
+                .then((response) => {
+                  //console.log(response);
+                  this.crossLinkDataLoading = false;
+                  if (response.hasOwnProperty("result")) {
+                    for (let item of response.result) {
+                      item.totalBalance = timesDecimals(item.totalBalance);
+                      item.balance = timesDecimals(item.balance);
+                      item.locking = timesDecimals(item.consensusLock + item.timeLock);
+                    }
+                    this.crossLinkData = response.result;
+                    this.txListDataLoading = false;
+                  }
+                })
+      },
+
+      /**
+       * 资产列表分页功能
+       * @param val
+       **/
+      addressAssetsListPages(val) {
+        this.pageNumber = val;
+        this.getTokenListByAddress(this.pageNumber, this.pageSize, this.addressInfo.address);
+      },
+
+      /**
+       * 隐藏共识奖励
+       * @param e
+       **/
+      changeHide(e) {
+        this.isHide = e;
+        this.pageNumber = 1;
+        this.getTxlistByAddress(this.pageNumber, this.pageSize, this.addressInfo.address, this.type, this.isHide)
+      },
+
+      /**
+       * 交易列表分页功能
+       * @param val
+       **/
+      txListPages(val) {
+        this.pageNumber = val;
+        this.getTxlistByAddress(this.pageNumber, this.pageSize, this.addressInfo.address, this.type, this.isHide)
+      },
+
       /**
        * 连接跳转
        * @param name
+       * @param parms
        */
-      toUrl(name) {
-        this.$router.push({
-          name: name,
-        })
+      toUrl(name, parms) {
+        //console.log(name)
+        //console.log(parms);
+        let newParms = {accountType: parms};
+        if (name === 'transfer') {
+          this.$router.push({
+            name: name,
+            query: newParms
+          })
+        }else if(name === 'frozenList'){
+          newParms = {accountInfo:parms};
+          this.$router.push({
+            name: name,
+            query:newParms
+          })
+        }else {
+          if (parms.type === 2) {
+            this.$router.push({
+              name: 'tokenTxList'
+            })
+          } else {
+            this.$router.push({
+              name: name,
+            })
+          }
+        }
+      },
+
+      /**
+       * 复制方法
+       * @param sting
+       **/
+      copy(sting) {
+        copys(sting);
+        this.$message({message: this.$t('public.copySuccess'), type: 'success', duration: 1000});
       },
     }
   }
 </script>
-
 <style lang="less">
   @import "./../../assets/css/style";
 
-  .new-address {
-    .bg-white {
+  .home {
+    background-color: @Bcolour1;
+    .title {
     }
-    .tab {
-      .tips {
-        margin: 40px auto;
-        padding: 20px 30px;
-        p {
-          line-height: 24px;
-          i {
-            width: 5px;
-            height: 5px;
-            display: block;
-            float: left;
-            margin: 9px 10px 0 0;
-            border-radius: 5px;
-            background: #000000;
-          }
-        }
+    .el-tabs {
+      margin: 30px auto 0;
+      .el-select {
+        margin: 5px 10px 15px 0;
       }
-      .pass-form {
-
-      }
-
     }
   }
-
 </style>
