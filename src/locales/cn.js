@@ -226,13 +226,14 @@ const cn ={
     "price":"价格",
     "num":"数量",
     "txNum":"交易数量",
-    "remainNum":"订单剩余数量",
+    "remainNum":"剩余数量",
     "maxTxNum":"余额可交易量",
     "usable":"可用",
     "txType":"交易类型",
     "createTime":"时间",
     "tokenPair":"交易对",
     "totalAmount":"总额",
+    "txAmount":"交易金额",
     "status":"状态"
   },
   ...zhLocale

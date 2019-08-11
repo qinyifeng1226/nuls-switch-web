@@ -19,7 +19,7 @@
                                     <el-input type="input" v-model="buyTokenOrderForm.price" :placeholder="$t('switch.nullPrice')"></el-input>
                                 </el-form-item>
                             </div>
-                            <div class="order_span"><span>{{toTokenSymbol}}</span></div>
+                            <div class="order_span"><span>{{this.toTokenInfo.tokenSymbol}}</span></div>
                         </el-row>
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
@@ -28,12 +28,12 @@
                                     <el-input type="input" v-model="buyTokenOrderForm.totalNum" :placeholder="$t('switch.nullTxNum')"></el-input>
                                 </el-form-item>
                             </div>
-                            <div class="order_span"><span>{{fromTokenSymbol}}</span></div>
+                            <div class="order_span"><span>{{this.fromTokenInfo.tokenSymbol}}</span></div>
                         </el-row>
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.usable')}}：</span></div>
                             <div class="order_label"><span>{{toBalanceInfo.balance}}</span></div>
-                            <div class="order_label"><span>{{toTokenSymbol}}</span></div>
+                            <div class="order_label"><span>{{this.toTokenInfo.tokenSymbol}}</span></div>
                         </el-row>
                         <el-row class="order_btn_row">
                             <el-button type="primary" @click="submitCreateOrder('buyTokenOrderForm',1)">{{$t('switch.buy')}}</el-button>
@@ -53,7 +53,7 @@
                                     <el-input type="input" v-model="sellTokenOrderForm.price" :placeholder="$t('switch.nullPrice')"></el-input>
                                 </el-form-item>
                             </div>
-                            <div class="order_span"><span>{{toTokenSymbol}}</span></div>
+                            <div class="order_span"><span>{{this.toTokenInfo.tokenSymbol}}</span></div>
                         </el-row>
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.num')}}：</span></div>
@@ -62,12 +62,12 @@
                                     <el-input type="input" v-model="sellTokenOrderForm.totalNum" :placeholder="$t('switch.nullTxNum')"></el-input>
                                 </el-form-item>
                             </div>
-                            <div class="order_span"><span>{{fromTokenSymbol}}</span></div>
+                            <div class="order_span"><span>{{this.fromTokenInfo.tokenSymbol}}</span></div>
                         </el-row>
                         <el-row class="order_row">
                             <div class="order_label"><span>{{$t('orderInfo.usable')}}：</span></div>
                             <div class="order_label"><span>{{fromBalanceInfo.balance}}</span></div>
-                            <div class="order_label"><span>{{fromTokenSymbol}}</span></div>
+                            <div class="order_label"><span>{{this.fromTokenInfo.tokenSymbol}}</span></div>
                         </el-row>
                         <el-row class="order_btn_row">
                             <el-button type="primary" @click="submitCreateOrder('sellTokenOrderForm',2)">{{$t('switch.sell')}}</el-button>
@@ -80,7 +80,7 @@
             <div class="top-right fr">
                 <el-tabs v-model="activeName" @tab-click="handleClick">
                     <el-tab-pane :label="$t('switch.myWantBuy')" name="buyTab">
-                        <el-table :data="buyList" stripe border style="width: 100%;" class="mt_0"
+                        <el-table :data="buyList" stripe border
                                   v-loading="buyListLoading">
                             <el-table-column label="" width="30">
                             </el-table-column>
@@ -108,7 +108,7 @@
                         </div>
                     </el-tab-pane>
                     <el-tab-pane :label="$t('switch.myWantSell')" name="sellTab">
-                        <el-table :data="sellList" stripe border style="width: 100%;" class="mt_0"
+                        <el-table :data="sellList" stripe border
                                   v-loading="sellListLoading">
                             <el-table-column label="" width="30">
                             </el-table-column>
@@ -172,7 +172,7 @@
                             <template slot-scope="scope">
                                 <el-button type="text" size="mini" @click="cancelOrderClick(scope.row.orderId)">取消</el-button>
                                 <span v-if="scope.row.status==1"> | </span>
-                                <el-button type="text" size="mini" @click="getOrderTradeClick(scope.row.orderId)" v-if="scope.row.status==1">确认</el-button>
+                                <el-button type="text" size="mini" @click="getOrderTradeClick(scope.row.orderId, scope.row.price)" v-if="scope.row.status==1">确认</el-button>
                             </template>
                         </el-table-column>
                     </el-table>
@@ -216,7 +216,7 @@
                     </el-row>
                 </div>
             </el-form>
-            <div slot="footer" class="dialog-footer1">
+            <div slot="footer">
                 <el-button @click="buyTokenFormClose">取 消</el-button>
                 <el-button type="primary" @click="txTradeSubmit('buyTokenForm')">确 定
                 </el-button>
@@ -248,7 +248,7 @@
                     </el-row>
                 </div>
             </el-form>
-            <div slot="footer" class="dialog-footer1">
+            <div slot="footer">
                 <el-button @click="sellTokenFormClose">取 消</el-button>
                 <el-button type="primary" @click="txTradeSubmit('sellTokenForm')">确 定
                 </el-button>
@@ -269,13 +269,16 @@
                     <el-table-column :label="$t('orderInfo.createTime')" width="170" align="left">
                         <template slot-scope="scope">{{ scope.row.createTime }}</template>
                     </el-table-column>
-                    <el-table-column :label="$t('orderInfo.price')" width="150" align="left">
+                    <el-table-column :label="$t('orderInfo.price')" width="110" align="left">
                         <template slot-scope="scope">{{ scope.row.price }}</template>
                     </el-table-column>
-                    <el-table-column :label="$t('orderInfo.num')" width="150" align="left">
+                    <el-table-column :label="$t('orderInfo.num')" width="110" align="left">
                         <template slot-scope="scope">{{ scope.row.txNum }}</template>
                     </el-table-column>
-                    <el-table-column :label="$t('orderInfo.status')" width="150" align="left">
+                    <el-table-column :label="$t('orderInfo.txAmount')" width="110" align="left">
+                        <template slot-scope="scope">{{ scope.row.txAmount }}</template>
+                    </el-table-column>
+                    <el-table-column :label="$t('orderInfo.status')" width="120" align="left">
                         <template slot-scope="scope">
                             <span v-if="scope.row.status==1"> 确认中 </span>
                             <span v-if="scope.row.status==2"> 已确认 </span>
@@ -380,8 +383,6 @@
                 toTokenId: '',
                 buyTradeTitle: '买入 ',
                 sellTradeTitle: '卖出 ',
-                fromTokenSymbol: '',
-                toTokenSymbol: '',
                 addressInfo: '', //默认账户信息
                 balanceInfo: {},//当前账户余额信息
                 fromBalanceInfo: {},//账户原TOKEN余额信息
@@ -423,6 +424,7 @@
                 txNum: 0,
                 //订单ID
                 orderId: '',
+                orderPrice: '',
                 orderInfo:{},
                 tradeInfo:{},
                 price: '',
@@ -437,7 +439,7 @@
                 buyListPager: {
                     total: 0,
                     page: 1,
-                    rows: 2,
+                    rows: 5,
                 },
                 //可买挂单列表加载动画
                 buyListLoading: true,
@@ -447,7 +449,7 @@
                 sellListPager: {
                     total: 0,
                     page: 1,
-                    rows: 2,
+                    rows: 5,
                 },
                 //可卖挂单列表加载动画
                 sellListLoading: true,
@@ -682,24 +684,6 @@
                 }
             },
             /**
-             *  默认资产类型
-             * @param type 0：首次进入加载 1：填写地址以后判断默认为nuls
-             **/
-            // changeNuls(type = 1) {
-            //     let defaultType = 'NULS';
-            //     if (type === 0) {
-            //         if (this.$route.query.accountType) {
-            //             defaultType = this.$route.query.accountType
-            //         }
-            //     }
-            //     for (let item of this.assetsList) {
-            //         if (item.symbol === defaultType) {
-            //             this.changeAssets = item;
-            //             this.type = item.symbol;
-            //         }
-            //     }
-            // },
-            /**
              * 买入/卖出挂单提交
              * @param formName
              **/
@@ -747,7 +731,7 @@
                         "totalAmount": multiDecimals(Number(Times(price, totalNum)), 8)
                     };
                     await createOrder(params).then((response) => {
-                        console.log(response);
+                        //console.log(response);
                         if (response.success) {
                             this.buyTokenOrderForm.price = '';
                             this.buyTokenOrderForm.totalNum = '';
@@ -779,7 +763,6 @@
                     this.buyListLoading = true;
                     this.pagesBuyList();
                 } else if (tab.name === 'sellTab') {
-                    console.log("this.address:  " + this.address);
                     // 查询可卖挂单列表
                     this.sellListLoading = true;
                     this.pagesSellList();
@@ -905,6 +888,7 @@
                     };
                     let inOrOutputsA = {};
                     let balanceInfoA = {};
+                    //查询余额
                     await getBalanceOrNonceByAddress(assetsChainId, assetsId, toAddress).then((response) => {
                         if (response.success) {
                             balanceInfoA = response.data;
@@ -920,7 +904,6 @@
                     console.log(inOrOutputs);
                     let inputs = [...inOrOutputs.data.inputs, ...inOrOutputsA.data.inputs];
                     let outputs = [...inOrOutputs.data.outputs, ...inOrOutputsA.data.outputs];
-                    //组装交易并签名
                     //交易组装
                     tAssemble = await nuls.transactionAssemble(inputs, outputs, '', 2);
                     console.log(tAssemble);
@@ -1003,8 +986,9 @@
              *  查询订单交易记录列表
              * @param orderId
              **/
-            async getOrderTradeClick(orderId) {
+            async getOrderTradeClick(orderId, price) {
                 this.orderId = orderId;
+                this.orderPrice = price;
                 // 查询订单交易记录
                 this.pagesTradeList();
             },
@@ -1018,15 +1002,15 @@
                     if (response.success) {
                         // 展示订单交易详情
                         for (let item of response.data.records) {
-                            //item.price = divDecimals(item.price, 8);
+                            item.price = this.orderPrice;
                             item.txNum = divDecimals(item.txNum, 8);
                             item.totalNum = divDecimals(item.totalNum, 8);
+                            item.txAmount = Times(item.price, item.txNum);
                         }
                         this.tradeList = response.data.records;
                         this.tradeListPager.total = response.data.total;
                         this.tradeListLoading = false;
                         this.orderTradeVisible = true;
-                        //this.$message({message: this.$t('switch.getOrderTradeSuccess'), type: 'success', duration: 1000});
                     } else {
                         this.$message({message: this.$t('switch.getOrderTradeError') + response.data, type: 'error', duration: 1000});
                     }
@@ -1215,17 +1199,13 @@
             /**
              * 选择代币类型
              **/
-            changeTokenType(fromTokenInfo, toTokenInfo, fromTokenId, toTokenId, fromTokenSymbol, toTokenSymbol) {
-                //this.$message(fromTokenId+"==="+toTokenId);
-                //this.$message(fromTokenSymbol+"==="+toTokenSymbol);
+            changeTokenType(fromTokenInfo, toTokenInfo, fromTokenId, toTokenId) {
                 this.fromTokenInfo = fromTokenInfo;
                 this.toTokenInfo = toTokenInfo;
                 this.fromTokenId = fromTokenId;
                 this.toTokenId = toTokenId;
-                this.fromTokenSymbol = fromTokenSymbol;
-                this.toTokenSymbol = toTokenSymbol;
-                this.buyTradeTitle += fromTokenSymbol;
-                this.sellTradeTitle += fromTokenSymbol;
+                this.buyTradeTitle += fromTokenInfo.tokenSymbol;
+                this.sellTradeTitle += fromTokenInfo.tokenSymbol;
             },
 
             /**
@@ -1294,8 +1274,8 @@
             }
 
             .top-left {
-                margin-left: 5px;
-                width: 300px;
+                margin-left: 10px;
+                width: 320px;
                 height: 255px;
                 border: @BD1;
                 border-radius: 3px;
@@ -1320,7 +1300,7 @@
             }
 
             .order {
-                width: 620px;
+                width: 680px;
                 height: 255px;
                 float: left
             }
@@ -1333,11 +1313,12 @@
                         width: auto;
                         float: left;
                         display: inline;
-                        padding: 10px 0 0 5px;
+                        padding: 10px 0 0 10px;
+                        font-size: 14px;
                     }
 
                     .order_input {
-                        width: 160px;
+                        width: 180px;
                         float: left;
                         display: inline;
                     }
@@ -1346,7 +1327,7 @@
                         width: 60px;
                         float: left;
                         display: inline;
-                        padding: 10px 0 0 5px;
+                        padding: 10px 0 0 10px;
                     }
                 }
 
@@ -1362,6 +1343,7 @@
                 border: @BD1;
                 border-radius: 3px;
                 background-color: @Bcolour1;
+                margin: 0 0 0 20px;
                 @media screen and (max-width: 1000px) {
                     width: 95%;
                     height: auto;
@@ -1369,6 +1351,37 @@
 
                 .tabs_title {
                     padding: 0 0 0 30px;
+                }
+
+                .el-table {
+                    width: 100%;
+                    margin-top: 0px;
+                    tr {
+                        th {
+                            background-color: @Bcolour;
+                        }
+                    }
+                    .has-gutter {
+                        tr {
+                            th {
+                                padding: 0;
+                                background-color: @Bcolour;
+                                .cell {
+                                    color: @Acolor2;
+                                    height: 30px;
+                                    line-height: 30px;
+                                    text-transform: Capitalize;
+                                }
+                            }
+                        }
+                    }
+                    td {
+                        padding: 1px 0 !important;
+                    }
+                }
+                .el-button
+                {
+                    padding: 5px 10px;
                 }
             }
 
@@ -1378,61 +1391,8 @@
                 }
             }
 
-            .top-right {
-                margin: 0 0 0 20px;
-                @media screen and (max-width: 1000px) {
-                    margin: 0 0 0 2.5%;
-                }
 
-                .total_ul {
-                    margin: 0 20px;
-
-                    li {
-                        border-bottom: @BD1;
-                        padding: 0 10px;
-                        color: @Acolor3;
-
-                        &:last-child {
-                            border-bottom: 0
-                        }
-
-                        span {
-                            color: @Mcolour;
-                        }
-
-                        .click {
-                            color: @Ccolour;
-                        }
-                    }
-                }
-            }
         }
-
-        /*.buyToken {*/
-        /*    .order_row {*/
-        /*        padding-top: 15px;*/
-
-        /*        .order_label {*/
-        /*            width: auto;*/
-        /*            float: left;*/
-        /*            display: inline;*/
-        /*            padding: 10px 0 0 5px;*/
-        /*        }*/
-
-        /*        .order_input {*/
-        /*            width: 200px;*/
-        /*            float: left;*/
-        /*            display: inline;*/
-        /*        }*/
-
-        /*        .order_span {*/
-        /*            width: 60px;*/
-        /*            float: left;*/
-        /*            display: inline;*/
-        /*            padding: 10px 0 0 5px;*/
-        /*        }*/
-        /*    }*/
-        /*}*/
 
         .bottoms {
             margin: 0px auto 40px;
@@ -1466,17 +1426,7 @@
             .el-dialog__footer {
                 text-align: center;
                 background-color: #F5F6F9 !important;
-                .dialog-footer {
-                    padding: 1rem 1rem 0.1rem;
-                    .el-button {
-                        width: 9.5rem;
-                    }
-                    .el-button--success {
-                        span {
-                            color: white;
-                        }
-                    }
-                }
+                padding: 1rem 1rem 0.1rem;
             }
         }
     }
@@ -1498,7 +1448,7 @@
             }
             .tradeToken {
                 .trade_row {
-                    padding-top: 15px;
+                    padding-top: 8px;
 
                     span {
                         color: @Fcolour;
@@ -1513,6 +1463,7 @@
 
                     .trade_input {
                         width: 180px;
+                        height: 30px;
                         float: left;
                         display: inline;
                     }
