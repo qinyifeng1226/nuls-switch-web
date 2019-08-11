@@ -706,6 +706,18 @@
             async submitCreateOrder(formName,txType) {
                 this.$refs[formName].validate((valid) => {
                     if (valid) {
+                        //校验余额是否充足
+                        let totalAmount = multiDecimals(Times(this.buyTokenOrderForm.price, this.buyTokenOrderForm.totalNum), 8);
+                        let balance = multiDecimals(this.toBalanceInfo.balance, 8);
+                        if (txType == 2) {
+                            totalAmount = multiDecimals(Times(this.sellTokenOrderForm.price, this.sellTokenOrderForm.totalNum), 8);
+                            balance = multiDecimals(this.fromBalanceInfo.balance, 8);
+                        }
+                        if (totalAmount > balance)
+                        {
+                            this.$message({message: this.$t('switch.insufficientBalance'), type: 'error', duration: 2000});
+                            return false;
+                        }
                         this.txType=txType;
                         this.$refs.createOrderPassword.showPassword(true);
                     } else {
@@ -873,16 +885,12 @@
                     let tAssemble = [];
                     let inOrOutputs = {};
                     transferInfoB['amount'] = Number(Times(Times(this.orderInfo.price, this.txNum), 100000000).toString());
-                    //let amount = 10;//10-USDT
-                    //transferInfoA['amount'] = Number(Times(amount, 100000000).toString());
                     inOrOutputs = await inputsOrOutputs(transferInfoB, this.balanceInfo);
                     if (!inOrOutputs.success) {
                         this.$message(inOrOutputs.data);
                         return false;
                     }
                     // 将A->B挂单人转出到吃单人的input、output写到这里
-                    //fromAddress = "tNULSeBaMkHU3HYpX7xdf9mQWXciTz9xCStHuq";
-                    //toAddress = "tNULSeBaMjUnoMkTh9bSCYu1sGJM2vQZqGnvMK";
                     fromAddress = this.orderInfo.address;
                     toAddress = this.address;
                     //A转出资产
@@ -897,7 +905,7 @@
                     };
                     let inOrOutputsA = {};
                     let balanceInfoA = {};
-                    await getBalanceOrNonceByAddress(assetsChainId, assetsId, toAddress, divDecimals).then((response) => {
+                    await getBalanceOrNonceByAddress(assetsChainId, assetsId, toAddress).then((response) => {
                         if (response.success) {
                             balanceInfoA = response.data;
                         } else {
@@ -906,7 +914,6 @@
                     }).catch((error) => {
                         this.$message({message: this.$t('public.getBalanceException') + ": " + error, type: 'error', duration: 3000});
                     });
-                    //let amountB=20;//20-NULS
                     transferInfoA['amount'] = Number(Times(this.txNum, 100000000).toString());
                     inOrOutputsA = await inputsOrOutputs(transferInfoA, balanceInfoA);
                     console.log(inOrOutputsA);
