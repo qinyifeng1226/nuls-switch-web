@@ -6,10 +6,9 @@
       </div>
       <div class="nav fl">
         <el-menu :default-active="activeIndex" class="fl" mode="horizontal" @select="handleSelect">
-          <el-menu-item index="switchHall"><i class="el-icon-video-camera-solid"></i>交易大厅</el-menu-item>
-          <el-menu-item index="myAssets"><i class="el-icon-share"></i>资产列表</el-menu-item>
-          <el-menu-item index="myOrder"><i class="el-icon-video-camera-solid"></i>历史委托</el-menu-item>
-
+          <el-menu-item index="switchHall" :disabled="addressList.length === 0"><i class="el-icon-video-camera-solid"></i>{{$t('nav.switch')}}</el-menu-item>
+          <el-menu-item index="myAsset" :disabled="addressList.length === 0"><i class="el-icon-share"></i>{{$t('nav.myAsset')}}</el-menu-item>
+          <el-menu-item index="myOrder" :disabled="addressList.length === 0"><i class="el-icon-video-camera-solid"></i>{{$t('nav.myOrder')}}</el-menu-item>
         </el-menu>
         <el-link type="primary" @click="toUrl('newAddress')" class="user click fr tc" v-if="!accountAddress">登陆
         </el-link>
@@ -25,21 +24,23 @@
 </template>
 
 <script>
+  import {superLong, chainIdNumber, addressInfo} from '@/api/util'
   export default {
     data() {
       return {
         activeIndex: 'switchHall',//导航选中
         accountInfo: {},//账户信息
         accountAddress: '',
+        addressList: [] //地址列表
       };
     },
     created() {
+      this.getAddressList();
+    },
+    mounted() {
       setInterval(() => {
-        if (localStorage.hasOwnProperty('accountInfo')) {
-          this.accountInfo = JSON.parse(localStorage.getItem('accountInfo'));
-          this.accountAddress = this.accountInfo.address;
-        }
-      }, 500);
+        this.getAddressList();
+      }, 5000)
     },
 
     methods: {
@@ -51,18 +52,83 @@
        */
       handleSelect(key, keyPath) {
         console.log(key, keyPath);
-        this.$router.push({
-          name: key
-        })
+        if (keyPath.length > 1) {
+          if (keyPath[0] === "address") {
+            for (let item  of this.addressList) {
+              //清除选中
+              if (item.selection) {
+                item.selection = false;
+              }
+              //添加选中
+              if (item.address === keyPath[1]) {
+                item.selection = true;
+              }
+            }
+            localStorage.setItem(chainIdNumber(), JSON.stringify(this.addressList));
+          } else if (keyPath[0] === "set") {
+            this.$router.push({
+              name: keyPath[1]
+            })
+          } else if (keyPath[0] === "lang") {
+            this.selectLanguage(key)
+          }
+        } else {
+          this.$router.push({
+            name: key
+          })
+        }
+      },
+
+      /**
+       * 导航栏的选中
+       * @param val
+       **/
+      navActives(val) {
+        if (val.indexOf('/switchHall') === 0) {
+          return 'switchHall'
+        } else if (val.indexOf('/myAsset') === 0) {
+          return 'myAsset'
+        } else if (val.indexOf('/myOrder') === 0) {
+          return 'myOrder'
+        } else {
+          return 'home'
+        }
+      },
+
+      /**
+       * 获取账户列表
+       */
+      getAddressList() {
+        this.addressList = addressInfo(0);
+        if (this.addressList) {
+          for (let item  of this.addressList) {
+            item.addresss = superLong(item.address, 8);
+          }
+        }
+        if (localStorage.hasOwnProperty('accountInfo')) {
+          this.accountInfo = JSON.parse(localStorage.getItem('accountInfo'));
+          this.accountAddress = this.accountInfo.address;
+        }
+      },
+
+      /**
+       * 语言切换
+       * @param e
+       */
+      selectLanguage(e) {
+        this.lang = e;
+        this.$i18n.locale = this.lang;
       },
 
       /**
        * 退出
        */
       signOut() {
+        localStorage.removeItem(chainIdNumber());
         localStorage.removeItem('accountInfo');
         this.accountInfo = {};
         this.accountAddress = '';
+        this.addressList = {};
       },
 
       /**

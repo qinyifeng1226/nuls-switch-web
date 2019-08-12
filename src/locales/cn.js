@@ -1,15 +1,15 @@
 import zhLocale from 'element-ui/lib/locale/lang/zh-CN'
 const cn ={
   "nav":{
-    "home": "首页",
-    "block": "区块",
-    "address": "账户",
-    "transaction": "交易",
-    "consensus": "共识",
-    "contracts": "合约"
+    "switch": "交易大厅",
+    "myAsset": "资产列表",
+    "myOrder": "历史委托"
   },
 
   "public":{
+    "operation": "操作",
+    "display": "显示",
+    "total": "共",
     "apr":"年奖励率",
     "txs":"交易量",
     "stake": "全网委托量",
@@ -33,7 +33,7 @@ const cn ={
     "usablebalance":"可用",
     "usable":"可用",
     "balance":"余额",
-    "total":"总计",
+    "totals":"总计",
     "alias":"别名",
     "block":"块",
     "seedNode":"种子节点",
@@ -235,6 +235,29 @@ const cn ={
     "totalAmount":"总额",
     "txAmount":"交易金额",
     "status":"状态"
+  },
+  "asset": {
+    "asset0": "主网资产",
+    "asset1": "跨链资产"
+  },
+  "assetsType":{
+    "undefined": "",
+    "0": "所有资产",
+    "1": "普通资产",
+    "2": "合约资产",
+  },
+  "assetItem": {
+    "item0": "资产",
+    "item1": "类型",
+    "item2": "总额",
+    "item3": "锁定",
+    "item4": "可用",
+    "item5": "时间",
+    "item6": "金额",
+    "item7": "解冻时间",
+    "item8": "冻结原因",
+    "item9": "余额",
+    "item10": "状态",
   },
   ...zhLocale
 };

@@ -6,34 +6,32 @@
       <i class="iconfont iconfuzhi clicks" @click="copy(addressInfo.address)"></i>
     </h3>
     <el-tabs v-model="homeActive" @tab-click="handleClick" class="w1200">
-      <el-tab-pane :label="$t('home.home0')" name="homeFirst" v-loading="assetsListLoading">
+      <el-tab-pane :label="$t('asset.asset0')" name="homeFirst" v-loading="assetsListLoading">
         <el-select v-model="assetsValue" @change="channgeAsesets">
           <el-option v-for="item in assetsOptions" :key="item.value" :label="$t('assetsType.'+item.value)"
                      :value="item.value">
           </el-option>
         </el-select>
         <el-table :data="addressAssetsData" stripe border>
-          <el-table-column prop="account" :label="$t('tab.tab0')" align="center">
+          <el-table-column prop="account" :label="$t('assetItem.item0')" align="center">
           </el-table-column>
-          <el-table-column :label="$t('tab.tab1')" align="center" width="150">
+          <el-table-column :label="$t('assetItem.item1')" align="center" width="150">
             <template slot-scope="scope"><span>{{ $t('assetsType.'+scope.row.type) }}</span></template>
           </el-table-column>
-          <el-table-column prop="balance" :label="$t('tab.tab4')">
+          <el-table-column prop="balance" :label="$t('assetItem.item4')">
           </el-table-column>
-          <el-table-column :label="$t('tab.tab3')">
-            <template slot-scope="scope">
-              <span class="click" @click="toUrl('frozenList',scope.row)"
-                    v-show="scope.row.locking !== '--' && scope.row.locking !==0 ">{{scope.row.locking}}</span>
-              <span v-show="scope.row.locking === '--' || scope.row.locking ===0">{{scope.row.locking}}</span>
-            </template>
+          <el-table-column :label="$t('assetItem.item3')">
+            <template slot-scope="scope"><span>{{scope.row.locking}}</span></template>
           </el-table-column>
-          <el-table-column prop="total" :label="$t('tab.tab2')">
+          <el-table-column prop="total" :label="$t('assetItem.item2')">
           </el-table-column>
           <el-table-column fixed="right" :label="$t('public.operation')" align="center" min-width="120">
             <template slot-scope="scope">
-              <label class="click tab_bn" @click="toUrl('transfer',scope.row.account)">{{$t('nav.transfer')}}</label>
+              <label class="click tab_bn" @click="toUrl('SwitchHall',scope.row.account)">{{$t('nav.switch')}}</label>
+              <!--
               <span class="tab_line">|</span>
               <label class="click tab_bn" @click="toUrl('txList',scope.row)">{{$t('home.home2')}}</label>
+              -->
             </template>
           </el-table-column>
         </el-table>
@@ -49,29 +47,24 @@
           </el-pagination>
         </div>
       </el-tab-pane>
-      <el-tab-pane :label="$t('home.home1')" name="homeSecond">
+      <el-tab-pane :label="$t('asset.asset1')" name="homeSecond">
         <el-table :data="crossLinkData" stripe border v-loading="crossLinkDataLoading">
-          <el-table-column prop="symbol" :label="$t('tab.tab0')" align="center">
+          <el-table-column prop="symbol" :label="$t('assetItem.item0')" align="center">
           </el-table-column>
-          <!--  <el-table-column :label="$t('tab.tab1')" align="center" width="150">
-              <template slot-scope="scope"><span>{{ scope.row.symbol }}</span></template>
-            </el-table-column>-->
-          <el-table-column prop="balance" :label="$t('tab.tab4')">
+          <el-table-column prop="balance" :label="$t('assetItem.item4')">
           </el-table-column>
-          <el-table-column :label="$t('tab.tab3')">
-            <template slot-scope="scope">
-              <span class="click" @click="toUrl('frozenList',scope.row)"
-                    v-show="scope.row.locking !== '--' && scope.row.locking !==0 ">{{scope.row.locking}}</span>
-              <span v-show="scope.row.locking === '--' || scope.row.locking ===0">{{scope.row.locking}}</span>
-            </template>
+          <el-table-column :label="$t('assetItem.item3')">
+            <template slot-scope="scope"><span>{{scope.row.locking}}</span></template>
           </el-table-column>
-          <el-table-column prop="totalBalance" :label="$t('tab.tab2')">
+          <el-table-column prop="totalBalance" :label="$t('assetItem.item2')">
           </el-table-column>
           <el-table-column fixed="right" :label="$t('public.operation')" align="center" min-width="120">
             <template slot-scope="scope">
-              <label class="click tab_bn" @click="toUrl('transfer',scope.row.symbol)">{{$t('nav.transfer')}}</label>
+              <label class="click tab_bn" @click="toUrl('SwitchHall',scope.row.symbol)">{{$t('nav.switch')}}</label>
+              <!--
               <span class="tab_line">|</span>
               <label class="click tab_bn" @click="toUrl('txList',scope.row)">{{$t('home.home2')}}</label>
+              -->
             </template>
           </el-table-column>
         </el-table>
@@ -123,8 +116,8 @@
       this.addressInfo = addressInfo(1);
       setInterval(() => {
         this.addressInfo = addressInfo(1);
-      }, 500);
-
+      }, 5000);
+      console.log(this.addressInfo);
       //判断是否有账户
       if (this.addressInfo) {
         this.getAddressInfoByNode(this.addressInfo.address);
@@ -207,7 +200,7 @@
        * @param address
        **/
       getAddressInfoByNode(address) {
-        this.$post('/', 'getAccountLedgerList', [address], 'Home')
+        this.$post_nuls('/', 'getAccountLedgerList', [address], 'Home')
                 .then((response) => {
                   //console.log(response);
                   this.addressAssetsData = [];
@@ -242,7 +235,7 @@
        * @param address
        **/
       getTokenListByAddress(pageSize, pageRows, address) {
-        this.$post('/', 'getAccountTokens', [pageSize, pageRows, address], 'Home')
+        this.$post_nuls('/', 'getAccountTokens', [pageSize, pageRows, address], 'Home')
                 .then((response) => {
                   //console.log(response);
                   let newAssetsList = {};
@@ -270,7 +263,7 @@
        **/
       getAccountCrossLedgerList(address) {
         //this.txListDataLoading = true;
-        this.$post('/', 'getAccountCrossLedgerList', [address], 'Home')
+        this.$post_nuls('/', 'getAccountCrossLedgerList', [address], 'Home')
                 .then((response) => {
                   //console.log(response);
                   this.crossLinkDataLoading = false;
@@ -296,25 +289,6 @@
       },
 
       /**
-       * 隐藏共识奖励
-       * @param e
-       **/
-      changeHide(e) {
-        this.isHide = e;
-        this.pageNumber = 1;
-        this.getTxlistByAddress(this.pageNumber, this.pageSize, this.addressInfo.address, this.type, this.isHide)
-      },
-
-      /**
-       * 交易列表分页功能
-       * @param val
-       **/
-      txListPages(val) {
-        this.pageNumber = val;
-        this.getTxlistByAddress(this.pageNumber, this.pageSize, this.addressInfo.address, this.type, this.isHide)
-      },
-
-      /**
        * 连接跳转
        * @param name
        * @param parms
@@ -323,7 +297,7 @@
         //console.log(name)
         //console.log(parms);
         let newParms = {accountType: parms};
-        if (name === 'transfer') {
+        if (name === 'SwitchHall') {
           this.$router.push({
             name: name,
             query: newParms

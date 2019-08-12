@@ -5,6 +5,8 @@ import NewAddress from './views/user/NewAddress'
 import ImportAddress from './views/user/ImportAddress'
 import BackupsAddress from './views/user/BackupsAddress'
 import SwitchHall from './views/tx/SwitchHall'
+import AssetList from './views/asset/AssetList'
+import HisOrder from './views/order/HisOrder'
 
 Vue.use(Router);
 
@@ -41,14 +43,14 @@ export default new Router({
       component: SwitchHall
     },
     {
-      path: '/SwitchHall',
-      name: 'myAssets',
-      component: SwitchHall
+      path: '/myAsset',
+      name: 'myAsset',
+      component: AssetList
     },
     {
-      path: '/SwitchHall',
+      path: '/myOrder',
       name: 'myOrder',
-      component: SwitchHall
+      component: HisOrder
     }
   ]
 })

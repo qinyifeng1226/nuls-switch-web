@@ -107,14 +107,13 @@ export function chainIdNumber() {
  * @returns {*}
  */
 export function addressInfo(type, address) {
-    let chainNumber = 'chainId' + chainID();
-    let addressList = localStorage.hasOwnProperty(chainNumber) ? JSON.parse(localStorage.getItem(chainNumber)) : [];
+    let addressList = localStorage.hasOwnProperty(chainIdNumber()) ? JSON.parse(localStorage.getItem(chainIdNumber())) : [];
     if (addressList) {
         if (type === 0) {
             return addressList
         } else {
             for (let item  of addressList) {
-                if (address != '') {
+                if (address) {
                     if (item.address === address) {
                         return item
                     }
