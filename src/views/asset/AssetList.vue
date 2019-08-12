@@ -85,7 +85,7 @@
 </template>
 
 <script>
-  import {timesDecimals, copys, addressInfo} from '@/api/util'
+  import {divDecimals, copys, addressInfo} from '@/api/util'
 
   export default {
     name: 'home',
@@ -210,9 +210,9 @@
                     newAssetsList.chainId = response.result[0].chainId;
                     newAssetsList.assetId = response.result[0].assetId;
                     newAssetsList.type = 1;
-                    newAssetsList.total = timesDecimals(response.result[0].totalBalance);
-                    newAssetsList.locking = timesDecimals(response.result[0].consensusLock + response.result[0].timeLock);
-                    newAssetsList.balance = timesDecimals(response.result[0].balance);
+                    newAssetsList.total = divDecimals(response.result[0].totalBalance);
+                    newAssetsList.locking = divDecimals(response.result[0].consensusLock + response.result[0].timeLock);
+                    newAssetsList.balance = divDecimals(response.result[0].balance);
                   } else {
                     newAssetsList.account = response.result.symbol;
                     newAssetsList.chainId = response.result.chainId;
@@ -243,9 +243,9 @@
                     for (let itme of response.result.list) {
                       itme.account = itme.tokenSymbol;
                       itme.type = 2;
-                      itme.total = timesDecimals(itme.balance, itme.decimals);
+                      itme.total = divDecimals(itme.balance, itme.decimals);
                       itme.locking = '--';
-                      itme.balance = timesDecimals(itme.balance, itme.decimals);
+                      itme.balance = divDecimals(itme.balance, itme.decimals);
                     }
                     newAssetsList = response.result.list;
                   }
@@ -269,9 +269,9 @@
                   this.crossLinkDataLoading = false;
                   if (response.hasOwnProperty("result")) {
                     for (let item of response.result) {
-                      item.totalBalance = timesDecimals(item.totalBalance);
-                      item.balance = timesDecimals(item.balance);
-                      item.locking = timesDecimals(item.consensusLock + item.timeLock);
+                      item.totalBalance = divDecimals(item.totalBalance);
+                      item.balance = divDecimals(item.balance);
+                      item.locking = divDecimals(item.consensusLock + item.timeLock);
                     }
                     this.crossLinkData = response.result;
                     this.txListDataLoading = false;

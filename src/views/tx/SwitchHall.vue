@@ -322,7 +322,7 @@
     import sdk from 'nuls-sdk-js/lib/api/sdk'
     import Password from '@/components/PasswordBar'
     import SelectTokenBar from '@/components/SelectTokenBar'
-    import {addressInfo, chainID, multiDecimals, Times, divDecimals, Division, toFixed, deserializeTx} from '@/api/util.js'
+    import {addressInfo, chainID, multiDecimals, Times, divDecimals, Division, toFixed, deserializeTx} from '@/api/util'
     import {
         createOrder,
         tradingOrder,

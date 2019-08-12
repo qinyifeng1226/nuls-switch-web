@@ -1,27 +1,46 @@
 <template>
   <div class="new-address bg-gray">
-    <div class="bg-white">
-      <h3 class="title">欢迎来到NULS,我们一起让区块链世界变得更简单</h3>
-    </div>
-    <div class="tab bg-white w1200 mt_30">
-      <div class="tips bg-gray w630">
-        <p class="font14"><i></i>请设置密码用以导入账户、转账、参与共识等重要行为验证</p>
-        <p class="font14"><i></i>请认真保存钱包密码，NULS钱包不存储密码，也无法帮您找回，请务必牢记</p>
-      </div>
-
-      <el-form :model="newAddressForm" status-icon :rules="newAddressRules" ref="newAddressForm" class="pass-form w630">
-        <el-form-item label="密码" prop="pass">
-          <el-input type="password" v-model="newAddressForm.pass" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item label="确认密码" prop="checkPass">
-          <el-input type="password" v-model="newAddressForm.checkPass" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item class="form-bnt">
-          <el-button type="success" @click="submitForm('newAddressForm')">创建账户</el-button>
-          <el-button type="text" @click="toUrl('importAddress')">导入账户</el-button>
-        </el-form-item>
-      </el-form>
-
+    <el-table :data="depositList" stripe border class="mt_0 el-deposit-table"
+              v-loading="depositListLoading">
+      <el-table-column label="" width="30">
+      </el-table-column>
+      <el-table-column :label="$t('orderInfo.createTime')" width="170" align="left">
+        <template slot-scope="scope">{{ scope.row.createTime }}</template>
+      </el-table-column>
+      <el-table-column :label="$t('orderInfo.txType')" width="120" align="left">
+        <template slot-scope="scope">
+          <span v-if="scope.row.txType ==1">{{$t('switch.buy')}}</span>
+          <span v-else>{{$t('switch.sell')}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column :label="$t('orderInfo.tokenPair')" width="170" align="left">
+        <template slot-scope="scope">{{ scope.row.tokenPair }}</template>
+      </el-table-column>
+      <el-table-column :label="$t('orderInfo.price')" width="170" align="left">
+        <template slot-scope="scope">{{ scope.row.price }}</template>
+      </el-table-column>
+      <el-table-column :label="$t('orderInfo.num')" width="170" align="left">
+        <template slot-scope="scope">{{ scope.row.txNum }}/{{ scope.row.totalNum }}</template>
+      </el-table-column>
+      <el-table-column :label="$t('orderInfo.totalAmount')" width="170" align="left">
+        <template slot-scope="scope">{{ scope.row.totalAmount }}</template>
+      </el-table-column>
+      <el-table-column :label="$t('orderInfo.status')" width="180" align="left">
+        <template slot-scope="scope">
+          <el-button type="text" size="mini" @click="cancelOrderClick(scope.row.orderId)">取消</el-button>
+          <span v-if="scope.row.status==1"> | </span>
+          <el-button type="text" size="mini" @click="getOrderTradeClick(scope.row.orderId, scope.row.price)" v-if="scope.row.status==1">确认</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+    <div class="paging">
+      <el-pagination class="pages" background layout="total,prev, pager, next, jumper"
+                     v-show="depositListPager.total > depositListPager.rows"
+                     :total="depositListPager.total"
+                     :current-page.sync="depositListPager.page"
+                     :pager-count=5
+                     :page-size="depositListPager.rows" @current-change="pagesDepositList">
+      </el-pagination>
     </div>
   </div>
 </template>
@@ -30,84 +49,57 @@
   import nuls from 'nuls-sdk-js'
   import {API_CHAIN_ID} from '@/config'
   import {chainIdNumber} from '@/api/util'
-  import {getAddressInfoByAddress} from '@/api/requestData'
+  import {queryMyHisOrder} from '@/api/requestData'
 
   export default {
     data() {
-      let validatePass = (rule, value, callback) => {
-        if (value === '') {
-          callback(new Error('请输入密码'));
-        } else {
-          if (this.newAddressForm.checkPass !== '') {
-            this.$refs.newAddressForm.validateField('checkPass');
-          }
-          callback();
-        }
-      };
-      let validateCheckPass = (rule, value, callback) => {
-        if (value === '') {
-          callback(new Error('请再次输入密码'));
-        } else if (value !== this.newAddressForm.pass) {
-          callback(new Error('两次输入密码不一致!'));
-        } else {
-          callback();
-        }
-      };
+
       return {
-        newAddressForm: {
-          pass: '',
-          checkPass: '',
+        //历史委托列表
+        depositList: [],
+        //历史委托列表分页信息
+        depositListPager: {
+          total: 0,
+          page: 1,
+          rows: 15,
         },
-        newAddressRules: {
-          pass: [
-            {validator: validatePass, trigger: 'blur'}
-          ],
-          checkPass: [
-            {validator: validateCheckPass, trigger: 'blur'}
-          ]
-        },
-        newAddressInfo: {},//创建地址信息
+        //历史委托列表加载动画
+        depositListLoading: true
       };
     },
+    created() {
+      this.pagesDepositList();
+    },
     methods: {
-
       /**
-       *  创建账户提交
-       * @param formName
-       **/
-      async submitForm(formName) {
-        this.$refs[formName].validate((valid) => {
-          if (valid) {
-            this.newAddressInfo = nuls.newAddress(API_CHAIN_ID, this.newAddressForm.pass);
-            this.getAddressInfoByAddress(this.newAddressInfo.address);
-          } else {
-            return false;
-          }
-        });
-      },
-
-      //获取账户信息根据创建的地址
-      async getAddressInfoByAddress(address) {
-        let addressInfo = await getAddressInfoByAddress(address);
-        let newAdressInfo = {...this.newAddressInfo, ...addressInfo.data};
-        if (addressInfo.success) {
-          localStorage.setItem(chainIdNumber(), JSON.stringify(newAdressInfo));
-          this.$router.push({
-            name: 'home'
-          });
-        } else {
-          this.$message({message: "创建地址错误: " + addressInfo.data.error.message, type: 'error', duration: 2000});
-        }
-      },
-      /**
-       * 连接跳转
-       * @param name
+       * 根据地址获取当前委托列表
        */
-      toUrl(name) {
-        this.$router.push({
-          name: name,
+      getDepositListByAddress(page, rows, address) {
+        let params = {"current": page, "pageSize": rows, "address": address};
+        queryMyHisOrder(params)
+                .then((response) => {
+                  if (response.hasOwnProperty("result")) {
+                    for (let item of response.result.records) {
+                      //item.createTime = moment(getLocalTime(item.createTime)).format('YYYY-MM-DD HH:mm:ss');
+                      item.price = divDecimals(item.price, 8);
+                      item.txNum = divDecimals(item.txNum, 8);
+                      item.totalNum = divDecimals(item.totalNum, 8);
+                      item.totalAmount = divDecimals(item.totalAmount, 8);
+                    }
+                    this.depositList = response.result.records;
+                    this.depositListPager.total = response.result.total;
+                    this.depositListLoading = false;
+                  }
+                }).catch((error) => {
+          console.log(error)
         })
       },
+      /**
+       * 根据地址获取当前委托列表 分页
+       */
+      pagesDepositList() {
+        this.getDepositListByAddress(this.depositListPager.page, this.depositListPager.rows, this.address);
+      }
     }
   }
 </script>
