@@ -569,10 +569,10 @@
                             this.balanceInfo = response.data;
                         }
                     } else {
-                        this.$message({message: this.$t('public.getBalanceFail') + response, type: 'error', duration: 1000});
+                        this.$message({message: this.$t('public.getBalanceFail') + response.data, type: 'error', duration: 1000});
                     }
                 }).catch((error) => {
-                    this.$message({message: this.$t('public.getBalanceException') + error, type: 'error', duration: 1000});
+                    this.$message({message: this.$t('public.getBalanceException') + error.data, type: 'error', duration: 1000});
                 });
             },
             /**
@@ -746,7 +746,7 @@
                             this.$message({message: this.$t('switch.createOrderError') + response.data, type: 'error', duration: 1000});
                         }
                     }).catch((err) => {
-                        this.$message({message: this.$t('switch.createOrderError') + err, type: 'error', duration: 1000});
+                        this.$message({message: this.$t('switch.createOrderError') + err.data, type: 'error', duration: 1000});
                     });
                 }else {
                     this.$message({message: this.$t('public.errorPwd'), type: 'error', duration: 1000});
@@ -893,10 +893,10 @@
                         if (response.success) {
                             balanceInfoA = response.data;
                         } else {
-                            this.$message({message: this.$t('public.getBalanceFail') + ": " + response, type: 'error', duration: 3000});
+                            this.$message({message: this.$t('public.getBalanceFail') + ": " + response.data, type: 'error', duration: 3000});
                         }
                     }).catch((error) => {
-                        this.$message({message: this.$t('public.getBalanceException') + ": " + error, type: 'error', duration: 3000});
+                        this.$message({message: this.$t('public.getBalanceException') + ": " + error.data, type: 'error', duration: 3000});
                     });
                     transferInfoA['amount'] = Number(Times(this.txNum, 100000000).toString());
                     inOrOutputsA = await inputsOrOutputs(transferInfoA, balanceInfoA);
@@ -932,7 +932,7 @@
                             this.$message({message: this.$t('switch.tradingOrderError') + response.data, type: 'error', duration: 3000});
                         }
                     }).catch((err) => {
-                        this.$message({message: this.$t('switch.tradingOrderError') + err, type: 'error', duration: 3000});
+                        this.$message({message: this.$t('switch.tradingOrderError') + err.data, type: 'error', duration: 3000});
                     });
                 } else {
                     this.$message({message: this.$t('public.errorPwd'), type: 'error', duration: 3000});
@@ -968,7 +968,7 @@
                             this.$message({message: this.$t('switch.cancelOrderError') + ": " + response.data, type: 'error', duration: 3000});
                         }
                     }).catch((err) => {
-                        this.$message({message: this.$t('switch.cancelOrderError') + ": " + err, type: 'error', duration: 3000});
+                        this.$message({message: this.$t('switch.cancelOrderError') + ": " + err.data, type: 'error', duration: 3000});
                     });
                 }else {
                     this.$message({message: this.$t('public.errorPwd'), type: 'error', duration: 1000});
@@ -1015,7 +1015,7 @@
                         this.$message({message: this.$t('switch.getOrderTradeError') + response.data, type: 'error', duration: 1000});
                     }
                 }).catch((err) => {
-                    this.$message({message: this.$t('switch.getOrderTradeError') + err, type: 'error', duration: 1000});
+                    this.$message({message: this.$t('switch.getOrderTradeError') + err.data, type: 'error', duration: 1000});
                 });
             },
 
@@ -1060,7 +1060,7 @@
                             this.$message({message: this.$t('error.' + response.data.code), type: 'error', duration: 3000});
                         }
                     }).catch((err) => {
-                        this.$message({message: this.$t('public.err1') + err, type: 'error', duration: 1000});
+                        this.$message({message: this.$t('public.err1') + err.data, type: 'error', duration: 1000});
                     });
 
                     if (txHash != null) {
@@ -1199,11 +1199,11 @@
             /**
              * 选择代币类型
              **/
-            changeTokenType(fromTokenInfo, toTokenInfo, fromTokenId, toTokenId) {
+            changeTokenType(fromTokenInfo, toTokenInfo) {
                 this.fromTokenInfo = fromTokenInfo;
                 this.toTokenInfo = toTokenInfo;
-                this.fromTokenId = fromTokenId;
-                this.toTokenId = toTokenId;
+                this.fromTokenId = fromTokenInfo.tokenId;
+                this.toTokenId = toTokenInfo.tokenId;
                 this.buyTradeTitle += fromTokenInfo.tokenSymbol;
                 this.sellTradeTitle += fromTokenInfo.tokenSymbol;
             },
@@ -1390,7 +1390,6 @@
                     display: none;
                 }
             }
-
 
         }
 

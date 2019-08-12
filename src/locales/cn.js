@@ -81,7 +81,9 @@ const cn ={
     "copysuccess":"复制成功",
     "errorPwd": "密码错误",
     "getBalanceFail": "获取账户余额失败:",
-    "getBalanceException": "获取账户余额异常:"
+    "getBalanceException": "获取账户余额异常:",
+    "queryMyHisOrderFail": "查询用户历史委托订单失败:",
+    "queryMyHisOrderException": "查询用户历史委托订单异常:"
   },
 
   "type": {

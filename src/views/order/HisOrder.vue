@@ -1,46 +1,47 @@
 <template>
-  <div class="new-address bg-gray">
-    <el-table :data="depositList" stripe border class="mt_0 el-deposit-table"
-              v-loading="depositListLoading">
-      <el-table-column label="" width="30">
-      </el-table-column>
-      <el-table-column :label="$t('orderInfo.createTime')" width="170" align="left">
-        <template slot-scope="scope">{{ scope.row.createTime }}</template>
-      </el-table-column>
-      <el-table-column :label="$t('orderInfo.txType')" width="120" align="left">
-        <template slot-scope="scope">
-          <span v-if="scope.row.txType ==1">{{$t('switch.buy')}}</span>
-          <span v-else>{{$t('switch.sell')}}</span>
-        </template>
-      </el-table-column>
-      <el-table-column :label="$t('orderInfo.tokenPair')" width="170" align="left">
-        <template slot-scope="scope">{{ scope.row.tokenPair }}</template>
-      </el-table-column>
-      <el-table-column :label="$t('orderInfo.price')" width="170" align="left">
-        <template slot-scope="scope">{{ scope.row.price }}</template>
-      </el-table-column>
-      <el-table-column :label="$t('orderInfo.num')" width="170" align="left">
-        <template slot-scope="scope">{{ scope.row.txNum }}/{{ scope.row.totalNum }}</template>
-      </el-table-column>
-      <el-table-column :label="$t('orderInfo.totalAmount')" width="170" align="left">
-        <template slot-scope="scope">{{ scope.row.totalAmount }}</template>
-      </el-table-column>
-      <el-table-column :label="$t('orderInfo.status')" width="180" align="left">
-        <template slot-scope="scope">
-          <el-button type="text" size="mini" @click="cancelOrderClick(scope.row.orderId)">取消</el-button>
-          <span v-if="scope.row.status==1"> | </span>
-          <el-button type="text" size="mini" @click="getOrderTradeClick(scope.row.orderId, scope.row.price)" v-if="scope.row.status==1">确认</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    <div class="paging">
-      <el-pagination class="pages" background layout="total,prev, pager, next, jumper"
-                     v-show="depositListPager.total > depositListPager.rows"
-                     :total="depositListPager.total"
-                     :current-page.sync="depositListPager.page"
-                     :pager-count=5
-                     :page-size="depositListPager.rows" @current-change="pagesDepositList">
-      </el-pagination>
+  <div class="his-order bg-gray">
+    <div class="bg-white">
+      <div class="title font24 w1200">
+        <SelectTokenBar @change="changeTokenType"></SelectTokenBar>
+      </div>
+    </div>
+    <div class="cb"></div>
+    <div class="bottoms w1200 cb">
+      <el-table :data="depositList" stripe border class="mt_0 el-deposit-table"
+                v-loading="depositListLoading">
+        <el-table-column label="" width="30">
+        </el-table-column>
+        <el-table-column :label="$t('orderInfo.createTime')" width="170" align="left">
+          <template slot-scope="scope">{{ scope.row.createTime }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('orderInfo.txType')" width="120" align="left">
+          <template slot-scope="scope">
+            <span v-if="scope.row.txType ==1">{{$t('switch.buy')}}</span>
+            <span v-else>{{$t('switch.sell')}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('orderInfo.tokenPair')" width="170" align="left">
+          <template slot-scope="scope">{{ scope.row.tokenPair }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('orderInfo.price')" width="170" align="left">
+          <template slot-scope="scope">{{ scope.row.price }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('orderInfo.num')" width="170" align="left">
+          <template slot-scope="scope">{{ scope.row.txNum }}/{{ scope.row.totalNum }}</template>
+        </el-table-column>
+        <el-table-column :label="$t('orderInfo.totalAmount')" width="170" align="left">
+          <template slot-scope="scope">{{ scope.row.totalAmount }}</template>
+        </el-table-column>
+      </el-table>
+      <div class="paging">
+        <el-pagination class="pages" background layout="total,prev, pager, next, jumper"
+                       v-show="depositListPager.total > depositListPager.rows"
+                       :total="depositListPager.total"
+                       :current-page.sync="depositListPager.page"
+                       :pager-count=5
+                       :page-size="depositListPager.rows" @current-change="pagesDepositList">
+        </el-pagination>
+      </div>
     </div>
   </div>
 </template>
@@ -48,13 +49,16 @@
 <script>
   import nuls from 'nuls-sdk-js'
   import {API_CHAIN_ID} from '@/config'
-  import {chainIdNumber} from '@/api/util'
+  import {chainIdNumber,divDecimals} from '@/api/util'
   import {queryMyHisOrder} from '@/api/requestData'
+  import SelectTokenBar from '@/components/SelectTokenBar'
 
   export default {
     data() {
-
       return {
+        address: localStorage.getItem('accountInfo') != null ? JSON.parse(localStorage.getItem('accountInfo')).address : '',
+        fromTokenInfo:{},
+        toTokenInfo: {},
         //历史委托列表
         depositList: [],
         //历史委托列表分页信息
@@ -67,6 +71,9 @@
         depositListLoading: true
       };
     },
+    components: {
+      SelectTokenBar
+    },
     created() {
       this.pagesDepositList();
     },
@@ -76,29 +83,37 @@
        */
       getDepositListByAddress(page, rows, address) {
         let params = {"current": page, "pageSize": rows, "address": address};
-        queryMyHisOrder(params)
+            queryMyHisOrder(params)
                 .then((response) => {
-                  if (response.hasOwnProperty("result")) {
-                    for (let item of response.result.records) {
+                  if (response.success) {
+                    for (let item of response.data.records) {
                       //item.createTime = moment(getLocalTime(item.createTime)).format('YYYY-MM-DD HH:mm:ss');
                       item.price = divDecimals(item.price, 8);
                       item.txNum = divDecimals(item.txNum, 8);
                       item.totalNum = divDecimals(item.totalNum, 8);
                       item.totalAmount = divDecimals(item.totalAmount, 8);
                     }
-                    this.depositList = response.result.records;
-                    this.depositListPager.total = response.result.total;
+                    this.depositList = response.data.records;
+                    this.depositListPager.total = response.data.total;
                     this.depositListLoading = false;
+                  } else {
+                    this.$message({message: this.$t('public.queryMyHisOrderFail') + response.data, type: 'error', duration: 3000});
                   }
-                }).catch((error) => {
-          console.log(error)
-        })
+                });
       },
       /**
        * 根据地址获取当前委托列表 分页
        */
       pagesDepositList() {
         this.getDepositListByAddress(this.depositListPager.page, this.depositListPager.rows, this.address);
+      },
+
+      /**
+       * 选择代币类型
+       **/
+      changeTokenType(fromTokenInfo, toTokenInfo) {
+        this.fromTokenInfo = fromTokenInfo;
+        this.toTokenInfo = toTokenInfo;
       }
     }
   }
@@ -107,8 +122,10 @@
 <style lang="less">
   @import "./../../assets/css/style";
 
-  .new-address {
+  .his-order {
+    margin: 0px auto 0;
     .bg-white {
+      height: 50px;
     }
     .tab {
       .tips {

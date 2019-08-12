@@ -54,7 +54,7 @@
                         }
                     }
                 }
-                this.$emit('change', this.fromTokenInfo, this.toTokenInfo, this.fromTokenId, this.toTokenId, this.fromTokenSymbol, this.toTokenSymbol);
+                this.$emit('change', this.fromTokenInfo, this.toTokenInfo);
             },
             changeToTokenType() {
                 let obj = {};
@@ -63,7 +63,7 @@
                 });
                 this.toTokenInfo = obj;
                 this.toTokenSymbol = obj.tokenSymbol;
-                this.$emit('change', this.fromTokenInfo, this.toTokenInfo, this.fromTokenId, this.toTokenId, this.fromTokenSymbol, this.toTokenSymbol);
+                this.$emit('change', this.fromTokenInfo, this.toTokenInfo);
             },
             /**
              * 获取所有支持兑换代币列表
@@ -84,7 +84,7 @@
                                     this.toTokenSymbol = this.toTokenOptions[0].tokenSymbol;
                                 }
                             }
-                            this.$emit('change', this.fromTokenInfo, this.toTokenInfo, this.fromTokenId, this.toTokenId, this.fromTokenSymbol, this.toTokenSymbol);
+                            this.$emit('change', this.fromTokenInfo, this.toTokenInfo);
                         }
                     }).catch((error) => {
                     console.log(error)
