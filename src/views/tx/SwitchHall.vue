@@ -541,7 +541,19 @@
                 if (val.address !== old.address && old.address) {
                     this.getAssetsListByAddress(this.accountAddress.address);
                 }
-            }
+            },
+            fromTokenInfo(val, old) {
+                if (val.tokenId !== old.tokenId && val.tokenId) {
+                    // fromBalanceInfo
+                    this.getBalanceOrNonce(1, val.chainId, val.assetId, this.accountAddress.address, 1);
+                }
+            },
+            toTokenInfo(val, old) {
+                if (val.tokenId !== old.tokenId && val.tokenId) {
+                    // toBalanceInfo
+                    this.getBalanceOrNonce(2, val.chainId, val.assetId, this.accountAddress.address, 1);
+                }
+            },
         },
         beforeDestroy() {
             //离开界面清除定时器
@@ -697,6 +709,7 @@
                             totalAmount = multiDecimals(Times(this.sellTokenOrderForm.price, this.sellTokenOrderForm.totalNum), 8);
                             balance = multiDecimals(this.fromBalanceInfo.balance, 8);
                         }
+                        console.log(totalAmount +"-----"+ balance);
                         if (totalAmount > balance)
                         {
                             this.$message({message: this.$t('switch.insufficientBalance'), type: 'error', duration: 2000});
@@ -1206,6 +1219,7 @@
                 this.toTokenId = toTokenInfo.tokenId;
                 this.buyTradeTitle += fromTokenInfo.tokenSymbol;
                 this.sellTradeTitle += fromTokenInfo.tokenSymbol;
+
             },
 
             /**

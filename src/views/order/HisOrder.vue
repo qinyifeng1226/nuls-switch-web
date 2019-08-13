@@ -2,7 +2,7 @@
   <div class="his-order bg-gray">
     <div class="bg-white">
       <div class="title font24 w1200">
-        <SelectTokenBar @change="changeTokenType"></SelectTokenBar>
+        <SelectTokenBar @change="changeTokenType" :allType="1"></SelectTokenBar>
       </div>
     </div>
     <div class="cb"></div>
