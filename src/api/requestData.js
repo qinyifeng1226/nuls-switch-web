@@ -114,7 +114,11 @@ export async function inputsOrOutputsAllTx(transferInfo, balanceInfo, type) {
  * @param balanceInfo
  * @returns {*}
  **/
-export async function inputsOrOutputs(transferInfo, balanceInfo) {
+export async function inputsOrOutputs(transferInfo, balanceInfo, fee) {
+    // 如果资产是NULS手续费直接增加到amount
+    if (fee && transferInfo.assetsChainId === chainID()) {
+        transferInfo.fee = 100000;
+    }
     let newAmount = Number(Plus(transferInfo.amount, transferInfo.fee));
     let newLocked = 0;
     let newNonce = balanceInfo.nonce;
@@ -123,10 +127,10 @@ export async function inputsOrOutputs(transferInfo, balanceInfo) {
     if (balanceInfo.balance < newAmount) {
         return {success: false, data: "Your balance is not enough."}
     }
-    if(!newNonce)
-    {
-        newNonce="ffffffffffffffff";
-    }
+    // if(!newNonce)
+    // {
+    //     newNonce="ffffffffffffffff";
+    // }
     let inputs = [{
         address: transferInfo.fromAddress,
         assetsChainId: transferInfo.assetsChainId,
@@ -135,12 +139,22 @@ export async function inputsOrOutputs(transferInfo, balanceInfo) {
         locked: newLocked,
         nonce: newNonce
     }];
-
-    // 跨链转账时，才需要根据不同资产收取NULS手续费
+    // 如果资产不是NULS手续费需要一个单独From
+    if (fee && transferInfo.assetsChainId !== chainID()) {
+        inputs.push({
+            address: transferInfo.fromAddress,
+            assetsChainId: chainID(),
+            assetsId: transferInfo.assetsId,
+            amount: 100000,
+            locked: newLocked,
+            nonce: newNonce
+        })
+    }
+    // 跨链资产转账时，才需要根据不同资产收取NULS手续费
     // if (transferInfo.assetsChainId !== chainID()) {
     //     inputs[0].amount = transferInfo.amount;
     //     //账户转出资产余额
-    //     let nulsbalance = await getBalanceOrNonceByAddress(chainID(), transferInfo.assetsId, transferInfo.fromAddress);
+    //     let nulsbalance = await getBalanceOrNonceByAddress(chainID(), 1, transferInfo.fromAddress);
     //     if (nulsbalance.data.balance < 100000) {
     //         console.log("余额小于手续费");
     //         return

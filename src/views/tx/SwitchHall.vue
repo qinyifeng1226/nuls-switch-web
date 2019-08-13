@@ -869,19 +869,30 @@
                     let fromAddress = this.address;
                     let toAddress = this.orderInfo.address;
                     //B转出资产
-                    let assetsChainId = this.toTokenInfo.chainId != null ? this.toTokenInfo.chainId : 2;;
-                    let assetsId = this.toTokenInfo.assetId != null ? this.toTokenInfo.assetId : 1;
+                    let assetsChainId = this.fromTokenInfo.chainId != null ? this.fromTokenInfo.chainId : 2;;
+                    let assetsId = this.fromTokenInfo.assetId != null ? this.fromTokenInfo.assetId : 1;
                     let transferInfoB = {
                         fromAddress: fromAddress,
                         toAddress: toAddress,
                         assetsChainId: assetsChainId,
                         assetsId: assetsId,
-                        fee: 100000
+                        fee: 0
                     };
                     let tAssemble = [];
                     let inOrOutputs = {};
-                    transferInfoB['amount'] = Number(Times(Times(this.orderInfo.price, this.txNum), 100000000).toString());
-                    inOrOutputs = await inputsOrOutputs(transferInfoB, this.balanceInfo);
+                    let balanceInfoB = {};
+                    //查询余额
+                    await getBalanceOrNonceByAddress(assetsChainId, assetsId, fromAddress).then((response) => {
+                        if (response.success) {
+                            balanceInfoB = response.data;
+                        } else {
+                            this.$message({message: this.$t('public.getBalanceFail') + ": " + response.data, type: 'error', duration: 3000});
+                        }
+                    }).catch((error) => {
+                        this.$message({message: this.$t('public.getBalanceException') + ": " + error.data, type: 'error', duration: 3000});
+                    });
+                    transferInfoB['amount'] = Number(Times(this.txNum, 100000000).toString());
+                    inOrOutputs = await inputsOrOutputs(transferInfoB, balanceInfoB, 1);
                     if (!inOrOutputs.success) {
                         this.$message(inOrOutputs.data);
                         return false;
@@ -890,8 +901,8 @@
                     fromAddress = this.orderInfo.address;
                     toAddress = this.address;
                     //A转出资产
-                    assetsChainId = this.fromTokenInfo.chainId != null ? this.fromTokenInfo.chainId : 2;;
-                    assetsId = this.fromTokenInfo.assetId != null ? this.fromTokenInfo.assetId : 1;
+                    assetsChainId = this.toTokenInfo.chainId != null ? this.toTokenInfo.chainId : 2;;
+                    assetsId = this.toTokenInfo.assetId != null ? this.toTokenInfo.assetId : 1;
                     let transferInfoA = {
                         fromAddress: fromAddress,
                         toAddress: toAddress,
@@ -902,7 +913,7 @@
                     let inOrOutputsA = {};
                     let balanceInfoA = {};
                     //查询余额
-                    await getBalanceOrNonceByAddress(assetsChainId, assetsId, toAddress).then((response) => {
+                    await getBalanceOrNonceByAddress(assetsChainId, assetsId, fromAddress).then((response) => {
                         if (response.success) {
                             balanceInfoA = response.data;
                         } else {
@@ -911,22 +922,17 @@
                     }).catch((error) => {
                         this.$message({message: this.$t('public.getBalanceException') + ": " + error.data, type: 'error', duration: 3000});
                     });
-                    transferInfoA['amount'] = Number(Times(this.txNum, 100000000).toString());
+                    transferInfoA['amount'] = Number(Times(Times(this.orderInfo.price, this.txNum), 100000000).toString());
                     inOrOutputsA = await inputsOrOutputs(transferInfoA, balanceInfoA);
-                    console.log(inOrOutputsA);
-                    console.log(inOrOutputs);
                     let inputs = [...inOrOutputs.data.inputs, ...inOrOutputsA.data.inputs];
                     let outputs = [...inOrOutputs.data.outputs, ...inOrOutputsA.data.outputs];
                     //交易组装
                     tAssemble = await nuls.transactionAssemble(inputs, outputs, '', 2);
-                    console.log(tAssemble);
                     //获取手续费
                     //let newFee = countFee(tAssemble, 1);
                     //交易签名
                     let txhex = await nuls.transactionSerialize(nuls.decrypteOfAES(this.addressInfo.aesPri, password), this.addressInfo.pub, tAssemble);
-                    console.log(txhex);
                     // 买卖TOKEN提交
-                    console.log("hex====="+tAssemble.hash.toString("hex"));
                     let params = {
                         "txHash": tAssemble.hash.toString("hex"),
                         "txHex": txhex,
@@ -936,7 +942,6 @@
                         "toNum": multiDecimals(Number(Times(this.price, this.txNum)), 8)
                     };
                     await tradingOrder(params).then((response) => {
-                        console.log(response);
                         if (response.success) {
                             this.buyTokenForm.txNum = '';
                             this.sellTokenForm.txNum = '';
@@ -973,7 +978,6 @@
                         "orderId": this.orderId
                     };
                     await cancelOrder(params).then((response) => {
-                        console.log(response);
                         if (response.success) {
                             this.orderId = '';
                             this.$message({message: this.$t('switch.cancelOrderSuccess'), type: 'success', duration: 2000});
@@ -1011,7 +1015,6 @@
             async pagesTradeList(){
                 let params = {"current":  this.tradeListPager.page, "pageSize": this.tradeListPager.rows, "orderId": this.orderId};
                 await getOrderDetail(params).then((response) => {
-                    //console.log(response);
                     if (response.success) {
                         // 展示订单交易详情
                         for (let item of response.data.records) {
@@ -1059,14 +1062,11 @@
                     sign.writeBytesWithLength(newSignature);
                     newTx.signatures = sign.getBufWriter().toBuffer();
                     let txhex = newTx.txSerialize().toString('hex');
-                    console.log(txhex)
 
                     //验证并广播交易
                     let txHash;
                     await validateAndBroadcast(txhex).then((response) => {
-                        console.log(response);
                         if (response.success) {
-                            //this.toUrl("txList");
                             txHash = response.hash;
                             console.log("txHash====" + txHash);
                         } else {
@@ -1084,7 +1084,6 @@
                             "dataHex": txhex
                         };
                         await confirmOrder(params).then((response) => {
-                            console.log(response);
                             if (response.success) {
                                 this.orderId = '';
                                 this.tradeInfo.status = 1;
@@ -1217,9 +1216,8 @@
                 this.toTokenInfo = toTokenInfo;
                 this.fromTokenId = fromTokenInfo.tokenId;
                 this.toTokenId = toTokenInfo.tokenId;
-                this.buyTradeTitle += fromTokenInfo.tokenSymbol;
-                this.sellTradeTitle += fromTokenInfo.tokenSymbol;
-
+                this.buyTradeTitle = '买入' + fromTokenInfo.tokenSymbol;
+                this.sellTradeTitle = '卖出' + fromTokenInfo.tokenSymbol;
             },
 
             /**
