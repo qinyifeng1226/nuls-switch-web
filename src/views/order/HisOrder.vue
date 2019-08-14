@@ -2,7 +2,19 @@
   <div class="his-order bg-gray">
     <div class="bg-white">
       <div class="title font24 w1200">
-        <SelectTokenBar @change="changeTokenType" :allType="1"></SelectTokenBar>
+        <div class="fl"><span>{{$t('orderInfo.depositTime')}}：</span>
+          <el-date-picker class="input-class"
+                v-model="creatTime"
+                type="daterange"
+                range-separator="-"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                format="yyyy-MM-dd HH:mm:ss"
+                :default-time="['00:00:00', '23:59:59']">
+          </el-date-picker>
+        </div>
+        <div class="fl"><span>{{$t('orderInfo.tokenPair')}}：</span><SelectTokenBar @change="changeTokenType" :allType="1"></SelectTokenBar></div>
+        <div class="fl"><span>{{$t('orderInfo.status')}}：</span></div>
       </div>
     </div>
     <div class="cb"></div>
@@ -67,6 +79,7 @@
           page: 1,
           rows: 15,
         },
+        creatTime: '',
         //历史委托列表加载动画
         depositListLoading: true
       };
@@ -126,6 +139,24 @@
     margin: 0px auto 0;
     .bg-white {
       height: 50px;
+    }
+    .title {
+      height: 40px;
+      line-height: 40px;
+      font-size: 12px;
+    }
+    .tokenBar{
+      float:right;
+    }
+    .input-class{
+      width: 355px !important;
+      .el-range-input{
+        width: 50%;
+      }
+    }
+    .el-input__inner
+    {
+      font-size: 12px;
     }
     .tab {
       .tips {

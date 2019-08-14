@@ -233,6 +233,7 @@ const cn ={
     "usable":"可用",
     "txType":"交易类型",
     "createTime":"时间",
+    "depositTime":"委托时间",
     "tokenPair":"交易对",
     "totalAmount":"总额",
     "txAmount":"交易金额",
