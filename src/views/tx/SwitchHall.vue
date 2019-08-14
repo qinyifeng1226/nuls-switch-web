@@ -869,7 +869,7 @@
                     let fromAddress = this.address;
                     let toAddress = this.orderInfo.address;
                     //B转出资产
-                    let assetsChainId = this.fromTokenInfo.chainId != null ? this.fromTokenInfo.chainId : 2;;
+                    let assetsChainId = this.fromTokenInfo.chainId != null ? this.fromTokenInfo.chainId : 2;
                     let assetsId = this.fromTokenInfo.assetId != null ? this.fromTokenInfo.assetId : 1;
                     let transferInfoB = {
                         fromAddress: fromAddress,
@@ -901,7 +901,7 @@
                     fromAddress = this.orderInfo.address;
                     toAddress = this.address;
                     //A转出资产
-                    assetsChainId = this.toTokenInfo.chainId != null ? this.toTokenInfo.chainId : 2;;
+                    assetsChainId = this.toTokenInfo.chainId != null ? this.toTokenInfo.chainId : 2;
                     assetsId = this.toTokenInfo.assetId != null ? this.toTokenInfo.assetId : 1;
                     let transferInfoA = {
                         fromAddress: fromAddress,

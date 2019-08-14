@@ -79,6 +79,7 @@ const cn ={
     "searchTip":"地址/高度/txhash/...",
     "copy":"点击复制",
     "copysuccess":"复制成功",
+    "query":"查询",
     "errorPwd": "密码错误",
     "getBalanceFail": "获取账户余额失败:",
     "getBalanceException": "获取账户余额异常:",
@@ -249,6 +250,13 @@ const cn ={
     "1": "普通资产",
     "2": "合约资产",
   },
+  "txStatus":{
+    "10": "全部",
+    "0": "未交易",
+    "1": "部分交易",
+    "2": "完成交易",
+    "9": "撤销"
+  },
   "assetItem": {
     "item0": "资产",
     "item1": "类型",
@@ -262,6 +270,7 @@ const cn ={
     "item9": "余额",
     "item10": "状态",
   },
+
   ...zhLocale
 };
 
