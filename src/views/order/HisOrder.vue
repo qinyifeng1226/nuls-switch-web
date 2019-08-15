@@ -150,7 +150,8 @@
           this.startQueryTime = moment(getLocalTime(startTime.getTime())).format('YYYY-MM-DD HH:mm:ss');
           this.endQueryTime = moment(getLocalTime(endTime.getTime())).format('YYYY-MM-DD HH:mm:ss');
         }
-        if(this.status === 10) {
+        let status = this.status;
+        if(status === 10) {
             status = '';
         }
         this.queryMyHisOrderPage(this.depositListPager.page, this.depositListPager.rows, this.address, this.fromTokenInfo.tokenId, this.toTokenInfo.tokenId, status, this.startQueryTime, this.endQueryTime);

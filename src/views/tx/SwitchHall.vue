@@ -319,7 +319,6 @@
     import nuls from 'nuls-sdk-js'
     import Serializers from 'nuls-sdk-js/lib/api/serializers'
     import buffer from 'nuls-sdk-js/lib/utils/buffer'
-    import sdk from 'nuls-sdk-js/lib/api/sdk'
     import Password from '@/components/PasswordBar'
     import SelectTokenBar from '@/components/SelectTokenBar'
     import {addressInfo, chainID, multiDecimals, Times, divDecimals, Division, toFixed, deserializeTx} from '@/api/util'
@@ -599,7 +598,6 @@
                 let chainId = 2;
                 await this.$post_nuls('/', 'getAccountLedgerList', [address])
                     .then((response) => {
-                        //console.log(response.result);
                         if (response.hasOwnProperty("result")) {
                             for (let item of response.result) {
                                 basicAssets.push({
@@ -616,13 +614,11 @@
                     .catch((error) => {
                         console.log("getAccountLedgerList:" + error);
                     });
-                ///console.log(basicAssets);
 
                 //获取本连的合约资产
                 let contractAssets = [];
                 await this.$post_nuls('/', 'getAccountTokens', [1, 100, address])
                     .then((response) => {
-                        //console.log(response);
                         if (response.hasOwnProperty("result")) {
                             for (let itme of response.result.list) {
                                 contractAssets.push({
@@ -640,13 +636,11 @@
                     .catch((error) => {
                         console.log("getAccountTokens:" + error);
                     });
-                //console.log(contractAssets);
 
                 //获取跨链的基本资产
                 let crossAssets = [];
                 await this.$post_nuls('/', 'getAccountCrossLedgerList', [address])
                     .then((response) => {
-                        //console.log(response);
                         if (response.hasOwnProperty("result")) {
                             for (let item of response.result) {
                                 crossAssets.push({
@@ -662,7 +656,6 @@
                     .catch((err) => {
                         console.log("getAccountCrossLedgerList:" + err);
                     });
-                //console.log(crossAssets);
 
                 this.assetsList = [...basicAssets, ...contractAssets, ...crossAssets];
                 let isNuls = false; //是否有nuls资产
@@ -682,7 +675,6 @@
                     };
                     this.assetsList.unshift(newNulsAssets);
                 }
-                //console.log(this.assetsList);
                 this.getSymbol();
             },
             /**
@@ -709,7 +701,6 @@
                             totalAmount = multiDecimals(Times(this.sellTokenOrderForm.price, this.sellTokenOrderForm.totalNum), 8);
                             balance = multiDecimals(this.fromBalanceInfo.balance, 8);
                         }
-                        console.log(totalAmount +"-----"+ balance);
                         if (totalAmount > balance)
                         {
                             this.$message({message: this.$t('switch.insufficientBalance'), type: 'error', duration: 2000});
@@ -744,7 +735,6 @@
                         "totalAmount": multiDecimals(Number(Times(price, totalNum)), 8)
                     };
                     await createOrder(params).then((response) => {
-                        //console.log(response);
                         if (response.success) {
                             this.buyTokenOrderForm.price = '';
                             this.buyTokenOrderForm.totalNum = '';
@@ -1068,7 +1058,6 @@
                     await validateAndBroadcast(txhex).then((response) => {
                         if (response.success) {
                             txHash = response.hash;
-                            console.log("txHash====" + txHash);
                         } else {
                             this.$message({message: this.$t('error.' + response.data.code), type: 'error', duration: 3000});
                         }
@@ -1129,10 +1118,6 @@
                     console.log(error)
                 })
             },
-
-            // this.listOnSell({"pageNumber":pageNumber,"pageSize":_self.pageSize,"address":_self.address},function(res){
-            //
-            // }),
 
             /**
              * 根据地址获取可买挂单列表 分页
