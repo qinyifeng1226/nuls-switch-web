@@ -170,9 +170,9 @@
                         </el-table-column>
                         <el-table-column :label="$t('orderInfo.status')" width="180" align="left">
                             <template slot-scope="scope">
-                                <el-button type="text" size="mini" @click="cancelOrderClick(scope.row.orderId)">取消</el-button>
+                                <el-button type="text" size="mini" @click="cancelOrderClick(scope.row.orderId)">{{$t('operateType.cancel')}}</el-button>
                                 <span v-if="scope.row.status==1"> | </span>
-                                <el-button type="text" size="mini" @click="getOrderTradeClick(scope.row.orderId, scope.row.price)" v-if="scope.row.status==1">确认</el-button>
+                                <el-button type="text" size="mini" @click="getOrderTradeClick(scope.row.orderId, scope.row.price)" v-if="scope.row.status==1">{{$t('operateType.confirm')}}</el-button>
                             </template>
                         </el-table-column>
                     </el-table>
@@ -202,7 +202,7 @@
                         <div class="trade_label"><span>{{$t('orderInfo.num')}}：</span></div>
                         <div class="trade_input">
                             <el-form-item prop="txNum">
-                                <el-input type="input" v-model="buyTokenForm.txNum" :maxlength="10" placeholder="请输入数量"></el-input>
+                                <el-input type="input" v-model="buyTokenForm.txNum" :maxlength="10" :placeholder="$t('switch.nullTxNum')"></el-input>
                             </el-form-item>
                         </div>
                     </el-row>
@@ -217,9 +217,8 @@
                 </div>
             </el-form>
             <div slot="footer">
-                <el-button @click="buyTokenFormClose">取 消</el-button>
-                <el-button type="primary" @click="txTradeSubmit('buyTokenForm')">确 定
-                </el-button>
+                <el-button @click="buyTokenFormClose">{{$t('operateType.cancel')}}</el-button>
+                <el-button type="primary" @click="txTradeSubmit('buyTokenForm')">{{$t('operateType.confirm')}}</el-button>
             </div>
         </el-dialog>
         <el-dialog :title="sellTradeTitle" :visible.sync="sellTokenVisible" top="30vh"
@@ -234,7 +233,7 @@
                         <div class="trade_label"><span>{{$t('orderInfo.num')}}：</span></div>
                         <div class="trade_input">
                             <el-form-item prop="txNum">
-                                <el-input type="input" v-model="sellTokenForm.txNum" :maxlength="10" placeholder="请输入数量"></el-input>
+                                <el-input type="input" v-model="sellTokenForm.txNum" :maxlength="10" :placeholder="$t('switch.nullTxNum')"></el-input>
                             </el-form-item>
                         </div>
                     </el-row>
@@ -249,9 +248,8 @@
                 </div>
             </el-form>
             <div slot="footer">
-                <el-button @click="sellTokenFormClose">取 消</el-button>
-                <el-button type="primary" @click="txTradeSubmit('sellTokenForm')">确 定
-                </el-button>
+                <el-button @click="sellTokenFormClose">{{$t('operateType.cancel')}}</el-button>
+                <el-button type="primary" @click="txTradeSubmit('sellTokenForm')">{{$t('operateType.confirm')}}</el-button>
             </div>
         </el-dialog>
 
@@ -280,10 +278,8 @@
                     </el-table-column>
                     <el-table-column :label="$t('orderInfo.status')" width="120" align="left">
                         <template slot-scope="scope">
-                            <span v-if="scope.row.status==1"> 确认中 </span>
-                            <span v-if="scope.row.status==2"> 已确认 </span>
-                            <span v-if="scope.row.status==9"> 已取消 </span>
-                            <el-button type="primary" size="mini" @click="confirmOrderClick(scope.row)" v-if="scope.row.status==0">确认</el-button>
+                            <span v-if="scope.row.status!=0"> {{$t('tradeStatus.'+ scope.row.status)}} </span>
+                            <el-button type="primary" size="mini" @click="confirmOrderClick(scope.row)" v-if="scope.row.status==0">{{$t('operateType.confirm')}}</el-button>
                         </template>
                     </el-table-column>
                 </el-table>
